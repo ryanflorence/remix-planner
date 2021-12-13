@@ -3,7 +3,7 @@ import { Fetcher } from "@remix-run/react/transition";
 import cuid from "cuid";
 import React from "react";
 import { useFetcher, useFormAction } from "remix";
-import { PlusIcon } from "./icons";
+import plusIconUrl from "~/icons/plus.svg";
 import { useLayoutEffect } from "./layout-effect";
 
 export enum Actions {
@@ -94,7 +94,10 @@ export function TaskList({
           onClick={addTask}
           className="shadow flex items-center justify-between gap-1 w-full bg-green-500 text-gray-50 px-4 py-2 rounded text-sm font-bold uppercase"
         >
-          New Task <PlusIcon />
+          New Task{" "}
+          <svg className="w-5 h-5">
+            <use href={`${plusIconUrl}#plus`} />
+          </svg>
         </button>
       </div>
     </div>

@@ -23,7 +23,9 @@ import {
 import { requireAuthSession } from "~/util/auth.server";
 import { ensureUserAccount } from "~/util/account.server";
 import { getBacklog, getDayTasks } from "~/models/task";
-import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
+import checkIconUrl from "~/icons/check.svg";
+import leftArrowIconUrl from "~/icons/left-arrow.svg";
+import rightArrowIconUrl from "~/icons/right-arrow.svg";
 import { getCalendarWeeks } from "~/util/date";
 
 type LoaderData = {
@@ -249,7 +251,9 @@ function DayTask({ task }: { task: RenderedTask }) {
             "text-gray-500 p-1 m-2 rounded-full bg-gray-200 active:bg-blue-500 active:text-white"
           }
         >
-          <CheckIcon className={complete ? "" : "opacity-0"} />
+          <svg className={`h-3 w-3 ${complete ? "" : "opacity-0"}`}>
+            <use xlinkHref={`${checkIconUrl}#check`} />
+          </svg>
         </button>
       </fetcher.Form>
 
@@ -283,7 +287,9 @@ function DayTask({ task }: { task: RenderedTask }) {
         />
         <input type="hidden" name="id" value={task.id} />
         <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
-          <RightArrowIcon />
+          <svg className="h-3 w-3">
+            <use xlinkHref={`${rightArrowIconUrl}#right-arrow`} />
+          </svg>
         </button>
       </fetcher.Form>
     </TaskItem>
@@ -314,7 +320,9 @@ function BacklogTask({ task }: { task: RenderedTask }) {
         <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
         <input type="hidden" name="id" value={task.id} />
         <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
-          <LeftArrowIcon />
+          <svg className="w-3 h-3">
+            <use xlinkHref={`${leftArrowIconUrl}#left-arrow`} />
+          </svg>
         </button>
       </fetcher.Form>
       <EditableTask

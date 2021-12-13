@@ -5,10 +5,12 @@
   "license": "",
   "scripts": {
     "postinstall": "remix setup",
+    "predev": "npm run build:icons",
     "dev": "concurrently \"npm run dev:css\" \"node -r dotenv/config node_modules/.bin/remix dev\"",
     "start": "remix-serve build",
-    "build": "npm run build:css && remix build",
+    "build": "npm run build:css && npm run build:icons && remix build",
     "build:css": "tailwindcss -o ./app/tailwind.css",
+    "build:icons": "node scripts/svg-symbols.mjs",
     "dev:css": "tailwindcss -o ./app/tailwind.css --watch"
   },
   "dependencies": {
@@ -32,6 +34,7 @@
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.4",
     "concurrently": "^6.4.0",
+    "svgo": "2.8.0",
     "tailwindcss": "^2.2.19",
     "typescript": "^4.1.2"
   },

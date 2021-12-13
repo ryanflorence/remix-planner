@@ -10,6 +10,7 @@ export enum Actions {
   CREATE_TASK = "CREATE_TASK",
   UPDATE_TASK_NAME = "UPDATE_TASK_NAME",
   MOVE_TASK_TO_DAY = "MOVE_TASK_TO_DAY",
+  MOVE_TASK_TO_BACKLOG = "MOVE_TASK_TO_BACKLOG",
   MARK_COMPLETE = "MARK_COMPLETE",
   MARK_INCOMPLETE = "MARK_INCOMPLETE",
 }
@@ -100,9 +101,17 @@ export function TaskList({
   );
 }
 
-export function TaskItem({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center border-t last:border-b text-gray-700 bg-gray-50 focus-within:bg-white p-2">
+export function TaskItem({
+  children,
+  hide,
+}: {
+  children: React.ReactNode;
+  // TODO: bringin in an animation library, needs to wrap the whole list to
+  // persist them for the animation
+  hide?: boolean;
+}) {
+  return hide ? null : (
+    <div className="flex items-center border-t last:border-b text-gray-700 bg-gray-50 focus-within:bg-white p-2 transition-all">
       {children}
     </div>
   );

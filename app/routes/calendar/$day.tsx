@@ -23,7 +23,7 @@ import {
 import { requireAuthSession } from "~/util/auth.server";
 import { ensureUserAccount } from "~/util/account.server";
 import { getBacklog, getDayTasks } from "~/models/task";
-import { CheckIcon, LeftArrowIcon } from "~/components/icons";
+import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
 import { getCalendarWeeks } from "~/util/date";
 
 type LoaderData = {
@@ -92,6 +92,15 @@ export let action: ActionFunction = async ({ request, params }) => {
       return db.task.update({
         where: { id: data.id },
         data: { date: new Date(params.day) },
+      });
+    }
+
+    case Actions.MOVE_TASK_TO_BACKLOG: {
+      invariant(typeof data.id === "string", "expected taskId");
+      invariant(params.day, "expcted params.day");
+      return db.task.update({
+        where: { id: data.id },
+        data: { date: null },
       });
     }
     default: {
@@ -219,8 +228,12 @@ function DayTask({ task }: { task: RenderedTask }) {
       ? false
       : Boolean(task.complete);
 
+  let moving =
+    fetcher.submission?.formData.get("_action") ===
+    Actions.MOVE_TASK_TO_BACKLOG;
+
   return (
-    <TaskItem key={task.id}>
+    <TaskItem key={task.id} hide={moving}>
       <fetcher.Form method="post" className="mr-1">
         <input
           type="hidden"
@@ -229,13 +242,17 @@ function DayTask({ task }: { task: RenderedTask }) {
         />
         <input type="hidden" name="id" value={task.id} />
         <button
+          style={{
+            WebkitTapHighlightColor: "transparent",
+          }}
           className={
-            "text-gray-500 p-1 m-2 rounded-full bg-gray-200 active:bg-blue-500"
+            "text-gray-500 p-1 m-2 rounded-full bg-gray-200 active:bg-blue-500 active:text-white"
           }
         >
           <CheckIcon className={complete ? "" : "opacity-0"} />
         </button>
       </fetcher.Form>
+
       <EditableTask
         task={task}
         onCreate={() => {
@@ -257,6 +274,18 @@ function DayTask({ task }: { task: RenderedTask }) {
           );
         }}
       />
+
+      <fetcher.Form method="post">
+        <input
+          type="hidden"
+          name="_action"
+          value={Actions.MOVE_TASK_TO_BACKLOG}
+        />
+        <input type="hidden" name="id" value={task.id} />
+        <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
+          <RightArrowIcon />
+        </button>
+      </fetcher.Form>
     </TaskItem>
   );
 }
@@ -276,13 +305,15 @@ function BacklogTask({ task }: { task: RenderedTask }) {
   // is calling this
   let action = useFormAction();
   let fetcher = useFetcher();
+  let moving =
+    fetcher.submission?.formData.get("_action") === Actions.MOVE_TASK_TO_DAY;
 
   return (
-    <TaskItem key={task.id}>
+    <TaskItem key={task.id} hide={moving}>
       <fetcher.Form method="post">
         <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
         <input type="hidden" name="id" value={task.id} />
-        <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500">
+        <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
           <LeftArrowIcon />
         </button>
       </fetcher.Form>

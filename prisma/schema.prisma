@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin-arm64"]
+}
+
+model User {
+  id      String   @id @unique @default(cuid())
+  email   String   @unique
+  buckets Bucket[]
+  tasks   Task[]
+}
+
+model Bucket {
+  id        String   @id @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+  slug String
+
+  User   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  tasks Task[]
+  notes Note[]
+}
+
+model Task {
+  id        String   @id @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name     String
+  complete Boolean   @default(false)
+  date     DateTime?
+
+  User   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  Bucket   Bucket? @relation(fields: [bucketId], references: [id])
+  bucketId String?
+}
+
+model Note {
+  id        String   @id @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+  date DateTime?
+
+  Bucket   Bucket? @relation(fields: [bucketId], references: [id])
+  bucketId String?
+}

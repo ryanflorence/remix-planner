@@ -6,9 +6,11 @@ import {
   useNavigate,
   useFormAction,
   useParams,
+  useFetchers,
+  NavLink,
 } from "remix";
 import invariant from "tiny-invariant";
-import React from "react";
+import React, { ReactNode } from "react";
 
 import type { LoaderFunction, ActionFunction } from "remix";
 import type { Task, User } from "@prisma/client";
@@ -25,6 +27,7 @@ import { ensureUserAccount } from "~/util/account.server";
 import { getBacklog, getDayTasks } from "~/models/task";
 import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
 import { getCalendarWeeks } from "~/util/date";
+import { format, isFirstDayOfMonth, isLastDayOfMonth, isToday } from "date-fns";
 
 type LoaderData = {
   user: User;
@@ -35,13 +38,14 @@ type LoaderData = {
 
 export let loader: LoaderFunction = async ({ request, params }) => {
   invariant(params.day, "Expected params.day");
+  let date = new Date(params.day);
   let session = await requireAuthSession(request);
   let user = await ensureUserAccount(session.get("auth"));
   let [backlog, tasks] = await Promise.all([
     getBacklog(user.id),
-    getDayTasks(user.id, new Date(params.day)),
+    getDayTasks(user.id, date),
   ]);
-  let weeks = getCalendarWeeks(new Date());
+  let weeks = getCalendarWeeks(date);
   return { user, backlog, tasks, weeks };
 };
 
@@ -72,6 +76,7 @@ export let action: ActionFunction = async ({ request, params }) => {
         update: { name: data.name, id: data.id },
       });
     }
+
     case Actions.MARK_COMPLETE: {
       invariant(typeof data.id === "string", "expected task id");
       return db.task.update({
@@ -79,6 +84,7 @@ export let action: ActionFunction = async ({ request, params }) => {
         data: { complete: true },
       });
     }
+
     case Actions.MARK_INCOMPLETE: {
       invariant(typeof data.id === "string", "expected task id");
       return db.task.update({
@@ -86,6 +92,7 @@ export let action: ActionFunction = async ({ request, params }) => {
         data: { complete: false },
       });
     }
+
     case Actions.MOVE_TASK_TO_DAY: {
       invariant(typeof data.id === "string", "expected taskId");
       invariant(params.day, "expcted params.day");
@@ -103,6 +110,12 @@ export let action: ActionFunction = async ({ request, params }) => {
         data: { date: null },
       });
     }
+
+    case Actions.DELETE_TASK: {
+      invariant(typeof data.id === "string", "expected taskId");
+      return db.task.delete({ where: { id: data.id } });
+    }
+
     default: {
       throw new Response("Bad Request", { status: 400 });
     }
@@ -203,10 +216,11 @@ export default function DayRoute() {
 }
 
 function Day() {
-  let { tasks } = useLoaderData<LoaderData>();
+  let { backlog, tasks } = useLoaderData<LoaderData>();
+  let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
   return (
     <TaskList
-      tasks={tasks}
+      tasks={tasks.concat(immigrants)}
       renderTask={(task) => <DayTask key={task.id} task={task} />}
     />
   );
@@ -232,9 +246,12 @@ function DayTask({ task }: { task: RenderedTask }) {
     fetcher.submission?.formData.get("_action") ===
     Actions.MOVE_TASK_TO_BACKLOG;
 
+  let deleting =
+    fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
+
   return (
-    <TaskItem key={task.id} hide={moving}>
-      <fetcher.Form method="post" className="mr-1">
+    <TaskItem key={task.id} hide={moving || deleting}>
+      <fetcher.Form method="post">
         <input
           type="hidden"
           name="_action"
@@ -246,7 +263,7 @@ function DayTask({ task }: { task: RenderedTask }) {
             WebkitTapHighlightColor: "transparent",
           }}
           className={
-            "text-gray-500 p-1 m-2 rounded-full bg-gray-200 active:bg-blue-500 active:text-white"
+            "text-blue-500 p-2 rounded-full nm-flat-gray-50-sm active:nm-inset-gray-50-sm"
           }
         >
           <CheckIcon className={complete ? "" : "opacity-0"} />
@@ -273,6 +290,12 @@ function DayTask({ task }: { task: RenderedTask }) {
             { method: "post", action }
           );
         }}
+        onDelete={() => {
+          fetcher.submit(
+            { _action: Actions.DELETE_TASK, id: task.id },
+            { method: "post", action }
+          );
+        }}
       />
 
       <fetcher.Form method="post">
@@ -282,20 +305,62 @@ function DayTask({ task }: { task: RenderedTask }) {
           value={Actions.MOVE_TASK_TO_BACKLOG}
         />
         <input type="hidden" name="id" value={task.id} />
-        <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
+        <ArrowButton>
           <RightArrowIcon />
-        </button>
+        </ArrowButton>
       </fetcher.Form>
     </TaskItem>
   );
 }
 
+function useImmigrants(action: Actions, tasks: Task[]): Task[] {
+  let fetchers = useFetchers();
+  let immigrants: Task[] = [];
+  let tasksMap = new Map<string, Task>();
+
+  // if there are some fetchers, fill up the map to avoid a nested loop next
+  if (fetchers.length) {
+    for (let task of tasks) {
+      tasksMap.set(task.id, task);
+    }
+  }
+
+  // find the tasks that are moving to the other list
+  for (let fetcher of fetchers) {
+    if (fetcher.submission?.formData.get("_action") === action) {
+      let id = fetcher.submission.formData.get("id");
+      if (typeof id === "string") {
+        let task = tasksMap.get(id);
+        if (task) {
+          immigrants.push(task);
+        }
+      }
+    }
+  }
+
+  return immigrants;
+}
+
 function Backlog() {
-  let { backlog } = useLoaderData<LoaderData>();
+  let { backlog, tasks } = useLoaderData<LoaderData>();
+  let immigrants = useImmigrants(Actions.MOVE_TASK_TO_BACKLOG, tasks);
+
   return (
     <TaskList
-      tasks={backlog}
+      tasks={backlog.concat(immigrants)}
       renderTask={(task) => <BacklogTask key={task.id} task={task} />}
+    />
+  );
+}
+
+function ArrowButton({ children }: { children: React.ReactNode }) {
+  return (
+    <button
+      style={{
+        WebkitTapHighlightColor: "transparent",
+      }}
+      className="text-gray-400 nm-flat-gray-50-xs active:nm-inset-gray-50-xs rounded-lg p-2"
+      children={children}
     />
   );
 }
@@ -308,14 +373,17 @@ function BacklogTask({ task }: { task: RenderedTask }) {
   let moving =
     fetcher.submission?.formData.get("_action") === Actions.MOVE_TASK_TO_DAY;
 
+  let deleting =
+    fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
+
   return (
-    <TaskItem key={task.id} hide={moving}>
+    <TaskItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
         <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
         <input type="hidden" name="id" value={task.id} />
-        <button className="text-gray-400 p-1 m-2 rounded-full border active:bg-blue-500 active:text-white">
+        <ArrowButton>
           <LeftArrowIcon />
-        </button>
+        </ArrowButton>
       </fetcher.Form>
       <EditableTask
         task={task}
@@ -328,6 +396,12 @@ function BacklogTask({ task }: { task: RenderedTask }) {
         onChange={(value) => {
           fetcher.submit(
             { _action: Actions.UPDATE_TASK_NAME, id: task.id, name: value },
+            { method: "post", action }
+          );
+        }}
+        onDelete={() => {
+          fetcher.submit(
+            { _action: Actions.DELETE_TASK, id: task.id },
             { method: "post", action }
           );
         }}
@@ -355,9 +429,27 @@ function Calendar() {
 }
 
 function CalendarDay({ datestring }: { datestring: string }) {
+  let date = new Date(datestring);
+  let isMonthBoundary = isFirstDayOfMonth(date) || isLastDayOfMonth(date);
+
   return (
-    <div className="bg-gray-100 flex items-center justify-center p-4 font-semibold">
-      {new Date(datestring).getDate()}
-    </div>
+    <NavLink
+      to={`../calendar/${datestring}`}
+      prefetch="intent"
+      className={({ isActive }) =>
+        "relative flex items-center justify-center p-4 font-semibold" +
+        " " +
+        (isActive ? "bg-white" : "bg-gray-100") +
+        " " +
+        (isToday(date) ? "text-red-500" : "")
+      }
+    >
+      {isMonthBoundary && (
+        <div className="absolute top-0 left-0 uppercase text-gray-500 text-xs font-light">
+          {format(date, "MMM")}
+        </div>
+      )}
+      {date.getDate()}
+    </NavLink>
   );
 }

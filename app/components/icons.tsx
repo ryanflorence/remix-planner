@@ -21,7 +21,7 @@ export function LeftArrowIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className="h-3 w-3"
+      className="h-4 w-4"
       viewBox="0 0 20 20"
       fill="currentColor"
     >
@@ -38,7 +38,7 @@ export function RightArrowIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className="h-3 w-3"
+      className="h-4 w-4"
       viewBox="0 0 20 20"
       fill="currentColor"
     >

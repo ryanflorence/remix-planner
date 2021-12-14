@@ -1,5 +1,6 @@
 import { Task } from "@prisma/client";
-import { Fetcher } from "@remix-run/react/transition";
+// @ts-expect-error
+import sortBy from "sort-by";
 import cuid from "cuid";
 import React from "react";
 import { useFetcher, useFormAction } from "remix";
@@ -13,6 +14,7 @@ export enum Actions {
   MOVE_TASK_TO_BACKLOG = "MOVE_TASK_TO_BACKLOG",
   MARK_COMPLETE = "MARK_COMPLETE",
   MARK_INCOMPLETE = "MARK_INCOMPLETE",
+  DELETE_TASK = "DELETE_TASK",
 }
 
 export type NewTask = {
@@ -86,13 +88,19 @@ export function TaskList({
   return (
     <div className="h-full relative">
       <div ref={scrollRef} className="h-full overflow-auto pb-16 mt-[-1px]">
-        {renderedTasks.map((task) => renderTask(task))}
+        {renderedTasks
+          .slice(0)
+          .sort(sortBy("createdAt"))
+          .map((task) => renderTask(task))}
       </div>
-      <div className="px-2 py-4 absolute left-0 bottom-0 w-full">
+      <div className="px-4 py-4 absolute left-0 bottom-0 w-full">
         <button
           type="button"
           onClick={addTask}
-          className="shadow flex items-center justify-between gap-1 w-full bg-green-500 text-gray-50 px-4 py-2 rounded text-sm font-bold uppercase"
+          style={{
+            WebkitTapHighlightColor: "transparent",
+          }}
+          className="shadow flex items-center justify-between gap-1 w-full nm-flat-gray-100 active:nm-inset-gray-100 text-green-500 px-4 py-2 rounded text-sm font-bold uppercase"
         >
           New Task <PlusIcon />
         </button>
@@ -111,7 +119,7 @@ export function TaskItem({
   hide?: boolean;
 }) {
   return hide ? null : (
-    <div className="flex items-center border-t last:border-b text-gray-700 bg-gray-50 focus-within:bg-white p-2 transition-all">
+    <div className="flex items-center border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4 transition-all">
       {children}
     </div>
   );
@@ -124,10 +132,12 @@ export function EditableTask({
   task,
   onCreate,
   onChange,
+  onDelete,
 }: {
   task: RenderedTask;
   onCreate: () => void;
   onChange: (value: string) => void;
+  onDelete: () => void;
 }) {
   // uncontrolled contenteditable, so don't ever take an update from the server
   let [initialValue] = React.useState(task.name);
@@ -150,7 +160,7 @@ export function EditableTask({
   return (
     <div
       ref={ref}
-      className="flex-1 outline-none"
+      className="flex-1 outline-none px-4"
       contentEditable
       onFocus={(e) => {
         placeCaretAtEnd(e.currentTarget);
@@ -158,6 +168,12 @@ export function EditableTask({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === "Escape") {
           e.currentTarget.blur();
+        }
+        if (e.key === "Backspace") {
+          let value = e.currentTarget.innerHTML.trim();
+          if (value === "") {
+            onDelete();
+          }
         }
       }}
       onBlur={(e) => {

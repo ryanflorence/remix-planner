@@ -416,7 +416,7 @@ function Calendar() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(7, 1fr)",
+        gridTemplateColumns: "repeat(7, minmax(0,1fr))",
         gridGap: "1px",
       }}
       className="bg-gray-200 border-b"
@@ -441,7 +441,7 @@ function CalendarDay({ datestring }: { datestring: string }) {
         " " +
         (isActive ? "bg-white" : "bg-gray-100") +
         " " +
-        (isToday(date) ? "text-red-500" : "")
+        (isToday(date) ? "text-red-500" : "text-gray-600")
       }
     >
       {isMonthBoundary && (

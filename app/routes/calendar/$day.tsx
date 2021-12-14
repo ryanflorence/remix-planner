@@ -10,7 +10,7 @@ import {
   NavLink,
 } from "remix";
 import invariant from "tiny-invariant";
-import React, { ReactNode } from "react";
+import React from "react";
 
 import type { LoaderFunction, ActionFunction } from "remix";
 import type { Task, User } from "@prisma/client";
@@ -28,6 +28,7 @@ import { getBacklog, getDayTasks } from "~/models/task";
 import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
 import { getCalendarWeeks } from "~/util/date";
 import { format, isFirstDayOfMonth, isLastDayOfMonth, isToday } from "date-fns";
+import { db } from "~/util/db.server";
 
 type LoaderData = {
   user: User;

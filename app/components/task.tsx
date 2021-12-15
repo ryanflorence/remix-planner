@@ -87,7 +87,7 @@ export function TaskList({
 
   return (
     <div className="h-full relative">
-      <div ref={scrollRef} className="h-full overflow-auto pb-16 mt-[-1px]">
+      <div ref={scrollRef} className="h-full overflow-auto pb-16">
         {renderedTasks
           .slice(0)
           .sort(sortBy("createdAt"))

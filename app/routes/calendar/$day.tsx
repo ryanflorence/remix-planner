@@ -128,82 +128,29 @@ export let action: ActionFunction = async ({ request, params }) => {
   }
 };
 
-function NavHeader({
-  children,
-  active,
-  href,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-  href: string;
-}) {
+function TaskListHeader({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <Link
-        replace
-        to={href}
-        style={{
-          WebkitTapHighlightColor: "transparent",
-        }}
-        className={
-          "lg:hidden flex-1 text-center block px-4 py-2 rounded-full font-bold uppercase text-sm active:bg-blue-300" +
-          " " +
-          (active ? "text-blue-500" : "text-gray-500")
-        }
-      >
-        {children}
-      </Link>
-      <ColumnHeader>{children}</ColumnHeader>
-    </>
+    <div
+      className="sticky top-0 bg-gray-100 border-b z-10 flex-1 text-center p-4 font-bold uppercase text-sm text-black"
+      children={children}
+    />
   );
 }
 
 export default function DayRoute() {
-  let location = useLocation();
-  let navigate = useNavigate();
   let params = useParams();
   invariant(params.day, "expected params.day");
   let day = format(new Date(params.day), "E, LLL do");
 
-  // managed as state because browsers don't send #hash to the server, so there
-  // would be a mismatch in markup after hydration if we didn't use state.
-  let [activePane, setActivePane] = React.useState<"backlog" | "day">("day");
-
-  let handlePanelScroll = (node: HTMLElement) => {
-    let { scrollLeft, offsetWidth } = node;
-    let atSnappingPoint = scrollLeft % offsetWidth === 0;
-    if (atSnappingPoint) {
-      navigate(scrollLeft > 0 ? "#backlog" : "#day", { replace: true });
-    }
-  };
-
-  React.useEffect(() => {
-    let id = location.hash.replace(/#/, "");
-    if (id === "backlog" || id === "day") {
-      setActivePane(id);
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [location]);
-
   return (
-    <div className="h-full flex flex-col">
-      <div>
+    <div className="h-full flex flex-col xl:flex-row">
+      <div className="xl:border-r">
         <Calendar />
       </div>
-
-      <Headers>
-        <NavHeader href="#day" active={activePane === "day"}>
-          {day}
-        </NavHeader>
-        <NavHeader href="#backlog" active={activePane === "backlog"}>
-          Backlog
-        </NavHeader>
-      </Headers>
 
       <div
         className="flex-1 flex h-full overflow-x-scroll lg:overflow-hidden"
         style={{ scrollSnapType: "x mandatory" }}
-        onScroll={(e) => handlePanelScroll(e.currentTarget)}
       >
         <div
           id="day"
@@ -213,6 +160,7 @@ export default function DayRoute() {
           }}
         >
           <div className="overflow-auto h-full border-r">
+            <TaskListHeader>{day}</TaskListHeader>
             <Day />
           </div>
         </div>
@@ -224,6 +172,7 @@ export default function DayRoute() {
             scrollSnapAlign: "start",
           }}
         >
+          <TaskListHeader>Backlog</TaskListHeader>
           <Backlog />
         </div>
       </div>
@@ -232,12 +181,7 @@ export default function DayRoute() {
 }
 
 function Headers({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="flex justify-around py-2 border-b bg-gray-50"
-      children={children}
-    />
-  );
+  return <div children={children} />;
 }
 
 function ColumnHeader({ children }: { children: React.ReactNode }) {
@@ -453,9 +397,8 @@ function Calendar() {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0,1fr))",
-        gridGap: "1px",
       }}
-      className="bg-gray-200 border-b"
+      className="bg-gray-50 border-b xl:border-b-0"
     >
       {weeks.map((week) =>
         week.map((day) => <CalendarDay key={day} datestring={day} />)
@@ -473,11 +416,11 @@ function CalendarDay({ datestring }: { datestring: string }) {
       to={`../${datestring}`}
       prefetch="intent"
       className={({ isActive }) =>
-        "relative flex items-center justify-center p-4 font-semibold" +
+        "relative flex items-center justify-center m-1 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm" +
         " " +
-        (isActive ? "bg-white" : "bg-gray-100") +
+        (isActive ? "bg-indigo-500 text-white" : "") +
         " " +
-        (isToday(date) ? "text-red-500" : "text-gray-600")
+        (isToday(date) ? "bg-gray-200" : "")
       }
     >
       {isMonthBoundary && (

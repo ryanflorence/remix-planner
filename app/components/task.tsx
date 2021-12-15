@@ -119,7 +119,7 @@ export function TaskItem({
   hide?: boolean;
 }) {
   return hide ? null : (
-    <div className="flex items-center border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4 transition-all">
+    <div className="flex items-center border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4">
       {children}
     </div>
   );

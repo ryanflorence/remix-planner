@@ -10,7 +10,7 @@ import {
   NavLink,
 } from "remix";
 import invariant from "tiny-invariant";
-import React from "react";
+import React, { ReactNode } from "react";
 
 import type { LoaderFunction, ActionFunction } from "remix";
 import type { Task, User } from "@prisma/client";
@@ -153,6 +153,10 @@ function NavHeader({
 export default function DayRoute() {
   let location = useLocation();
   let navigate = useNavigate();
+  let params = useParams();
+  invariant(params.day, "expected params.day");
+  let day = format(new Date(params.day), "E, LLL do");
+
   // managed as state because browsers don't send #hash to the server, so there
   // would be a mismatch in markup after hydration if we didn't use state.
   let [activePane, setActivePane] = React.useState<"backlog" | "day">("day");
@@ -178,33 +182,45 @@ export default function DayRoute() {
       <div>
         <Calendar />
       </div>
-      <div className="flex justify-around py-2 border-b bg-gray-50">
-        <NavHeader href="#day" active={activePane === "day"}>
-          Day
-        </NavHeader>
-        <NavHeader href="#backlog" active={activePane === "backlog"}>
-          Backlog
-        </NavHeader>
+
+      <div className="lg:hidden">
+        <Headers>
+          <NavHeader href="#day" active={activePane === "day"}>
+            {day}
+          </NavHeader>
+          <NavHeader href="#backlog" active={activePane === "backlog"}>
+            Backlog
+          </NavHeader>
+        </Headers>
       </div>
+
+      <div className="hidden lg:block">
+        <Headers>
+          <ColumnHeader>{day}</ColumnHeader>
+          <ColumnHeader>Backlog</ColumnHeader>
+        </Headers>
+      </div>
+
       <div
-        className="flex-1 flex overflow-x-scroll"
+        className="flex-1 flex h-full overflow-x-scroll lg:overflow-hidden"
         style={{ scrollSnapType: "x mandatory" }}
         onScroll={(e) => handlePanelScroll(e.currentTarget)}
       >
         <div
           id="day"
-          className="h-full flex-shrink-0 w-full order-1"
+          className="h-full flex-shrink-0 w-full order-1 lg:w-1/2"
           style={{
             scrollSnapAlign: "start",
           }}
         >
-          <div className="overflow-auto h-full">
+          <div className="overflow-auto h-full border-r">
             <Day />
           </div>
         </div>
+        <div className="border-r border-gray-400 h-full" />
         <div
           id="backlog"
-          className="flex-shrink-0 h-full w-full order-2"
+          className="flex-shrink-0 h-full w-full order-2 lg:w-1/2"
           style={{
             scrollSnapAlign: "start",
           }}
@@ -213,6 +229,24 @@ export default function DayRoute() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Headers({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="flex justify-around py-2 border-b bg-gray-50"
+      children={children}
+    />
+  );
+}
+
+function ColumnHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
+      children={children}
+    />
   );
 }
 

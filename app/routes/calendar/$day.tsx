@@ -133,20 +133,23 @@ function NavHeader({
   href: string;
 }) {
   return (
-    <Link
-      replace
-      to={href}
-      style={{
-        WebkitTapHighlightColor: "transparent",
-      }}
-      className={
-        "block px-4 py-2 rounded-full font-bold uppercase text-sm active:bg-blue-300" +
-        " " +
-        (active ? "text-blue-500" : "text-gray-500")
-      }
-    >
-      {children}
-    </Link>
+    <>
+      <Link
+        replace
+        to={href}
+        style={{
+          WebkitTapHighlightColor: "transparent",
+        }}
+        className={
+          "lg:hidden block px-4 py-2 rounded-full font-bold uppercase text-sm active:bg-blue-300" +
+          " " +
+          (active ? "text-blue-500" : "text-gray-500")
+        }
+      >
+        {children}
+      </Link>
+      <ColumnHeader>{children}</ColumnHeader>
+    </>
   );
 }
 
@@ -183,23 +186,14 @@ export default function DayRoute() {
         <Calendar />
       </div>
 
-      <div className="lg:hidden">
-        <Headers>
-          <NavHeader href="#day" active={activePane === "day"}>
-            {day}
-          </NavHeader>
-          <NavHeader href="#backlog" active={activePane === "backlog"}>
-            Backlog
-          </NavHeader>
-        </Headers>
-      </div>
-
-      <div className="hidden lg:block">
-        <Headers>
-          <ColumnHeader>{day}</ColumnHeader>
-          <ColumnHeader>Backlog</ColumnHeader>
-        </Headers>
-      </div>
+      <Headers>
+        <NavHeader href="#day" active={activePane === "day"}>
+          {day}
+        </NavHeader>
+        <NavHeader href="#backlog" active={activePane === "backlog"}>
+          Backlog
+        </NavHeader>
+      </Headers>
 
       <div
         className="flex-1 flex h-full overflow-x-scroll lg:overflow-hidden"
@@ -244,7 +238,7 @@ function Headers({ children }: { children: ReactNode }) {
 function ColumnHeader({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
+      className="hidden lg:block bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
       children={children}
     />
   );

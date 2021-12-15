@@ -326,10 +326,14 @@ async function sendMagicLinkEmail(
     </>
   );
 
-  return mailgun.messages().send({
-    from: "Remix Magic Link Demo <ryan@remix.run>",
-    to: email,
-    subject: "Login to Planner!",
-    html,
-  });
+  if (process.env.NODE_ENV === "production") {
+    return mailgun.messages().send({
+      from: "Remix Magic Link Demo <ryan@remix.run>",
+      to: email,
+      subject: "Login to Planner!",
+      html,
+    });
+  } else {
+    console.log(link);
+  }
 }

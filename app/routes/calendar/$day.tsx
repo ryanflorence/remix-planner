@@ -8,6 +8,7 @@ import {
   useParams,
   useFetchers,
   NavLink,
+  json,
 } from "remix";
 import invariant from "tiny-invariant";
 import React, { ReactNode } from "react";
@@ -29,6 +30,8 @@ import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
 import { getCalendarWeeks } from "~/util/date";
 import { format, isFirstDayOfMonth, isLastDayOfMonth, isToday } from "date-fns";
 import { db } from "~/util/db.server";
+import { useParentData } from "~/components/use-parent-data";
+import { CACHE_CONTROL } from "~/util/http";
 
 type LoaderData = {
   user: User;
@@ -42,12 +45,14 @@ export let loader: LoaderFunction = async ({ request, params }) => {
   let date = new Date(params.day);
   let session = await requireAuthSession(request);
   let user = await ensureUserAccount(session.get("auth"));
-  let [backlog, tasks] = await Promise.all([
-    getBacklog(user.id),
-    getDayTasks(user.id, date),
-  ]);
+  let tasks = await getDayTasks(user.id, date);
   let weeks = getCalendarWeeks(date);
-  return { user, backlog, tasks, weeks };
+  return json(
+    { user, tasks, weeks },
+    {
+      headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
+    }
+  );
 };
 
 export let action: ActionFunction = async ({ request, params }) => {
@@ -141,7 +146,7 @@ function NavHeader({
           WebkitTapHighlightColor: "transparent",
         }}
         className={
-          "lg:hidden block px-4 py-2 rounded-full font-bold uppercase text-sm active:bg-blue-300" +
+          "lg:hidden flex-1 text-center block px-4 py-2 rounded-full font-bold uppercase text-sm active:bg-blue-300" +
           " " +
           (active ? "text-blue-500" : "text-gray-500")
         }
@@ -238,14 +243,15 @@ function Headers({ children }: { children: ReactNode }) {
 function ColumnHeader({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="hidden lg:block bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
+      className="hidden flex-1 lg:block bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
       children={children}
     />
   );
 }
 
 function Day() {
-  let { backlog, tasks } = useLoaderData<LoaderData>();
+  let { tasks } = useLoaderData<LoaderData>();
+  let backlog = useParentData<Task[]>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
   return (
     <TaskList
@@ -371,7 +377,8 @@ function useImmigrants(action: Actions, tasks: Task[]): Task[] {
 }
 
 function Backlog() {
-  let { backlog, tasks } = useLoaderData<LoaderData>();
+  let { tasks } = useLoaderData<LoaderData>();
+  let backlog = useParentData<Task[]>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_BACKLOG, tasks);
 
   return (
@@ -463,7 +470,7 @@ function CalendarDay({ datestring }: { datestring: string }) {
 
   return (
     <NavLink
-      to={`../calendar/${datestring}`}
+      to={`../${datestring}`}
       prefetch="intent"
       className={({ isActive }) =>
         "relative flex items-center justify-center p-4 font-semibold" +

@@ -9,7 +9,8 @@
     "start": "remix-serve build",
     "build": "npm run build:css && remix build",
     "build:css": "tailwindcss -o ./app/tailwind.css",
-    "dev:css": "tailwindcss -o ./app/tailwind.css --watch"
+    "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
+    "deploy": "rm -rf build public/build && npm run build && fly deploy"
   },
   "dependencies": {
     "@prisma/client": "^3.6.0",

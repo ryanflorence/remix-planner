@@ -1,14 +1,12 @@
 import {
   useLoaderData,
   useFetcher,
-  Link,
-  useLocation,
-  useNavigate,
   useFormAction,
   useParams,
   useFetchers,
   NavLink,
   json,
+  useTransition,
 } from "remix";
 import invariant from "tiny-invariant";
 import React, { ReactNode } from "react";
@@ -25,19 +23,21 @@ import {
 
 import { requireAuthSession } from "~/util/auth.server";
 import { ensureUserAccount } from "~/util/account.server";
-import { getBacklog, getDayTasks } from "~/models/task";
+import { CalendarStats, getCalendarStats, getDayTasks } from "~/models/task";
 import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
-import { getCalendarWeeks } from "~/util/date";
+import { getCalendarWeeks, parseParamDate } from "~/util/date";
 import { format, isFirstDayOfMonth, isLastDayOfMonth, isToday } from "date-fns";
 import { db } from "~/util/db.server";
 import { useParentData } from "~/components/use-parent-data";
 import { CACHE_CONTROL } from "~/util/http";
+import { useLayoutEffect } from "~/components/layout-effect";
 
 type LoaderData = {
   user: User;
   backlog: Task[];
   tasks: Task[];
   weeks: Array<Array<string>>;
+  stats: CalendarStats;
 };
 
 export let loader: LoaderFunction = async ({ request, params }) => {
@@ -45,10 +45,18 @@ export let loader: LoaderFunction = async ({ request, params }) => {
   let date = new Date(params.day);
   let session = await requireAuthSession(request);
   let user = await ensureUserAccount(session.get("auth"));
-  let tasks = await getDayTasks(user.id, date);
+
   let weeks = getCalendarWeeks(date);
+  let start = new Date(weeks[0][0]);
+  let end = new Date(weeks.slice(-1)[0].slice(-1)[0]);
+
+  let [tasks, stats] = await Promise.all([
+    getDayTasks(user.id, date),
+    getCalendarStats(user.id, start, end),
+  ]);
+
   return json(
-    { user, tasks, weeks },
+    { user, tasks, weeks, stats },
     {
       headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
     }
@@ -131,7 +139,19 @@ export let action: ActionFunction = async ({ request, params }) => {
 function TaskListHeader({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="sticky top-0 bg-gray-100 border-b z-10 flex-1 text-center p-4 font-bold uppercase text-sm text-black"
+      className="bg-gray-100 border-b text-center p-4 font-bold uppercase text-sm text-black"
+      children={children}
+    />
+  );
+}
+
+function TaskListContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex flex-col h-full flex-shrink-0 w-full order-1 lg:w-1/2 border-l last:border-r"
+      style={{
+        scrollSnapAlign: "start",
+      }}
       children={children}
     />
   );
@@ -140,41 +160,26 @@ function TaskListHeader({ children }: { children: React.ReactNode }) {
 export default function DayRoute() {
   let params = useParams();
   invariant(params.day, "expected params.day");
-  let day = format(new Date(params.day), "E, LLL do");
+  let day = format(parseParamDate(params.day), "E, LLL do");
 
   return (
     <div className="h-full flex flex-col xl:flex-row">
-      <div className="xl:border-r">
+      <div>
         <Calendar />
       </div>
 
       <div
-        className="flex-1 flex h-full overflow-x-scroll lg:overflow-hidden"
+        className="flex-1 flex overflow-x-scroll overflow-y-hidden lg:overflow-hidden"
         style={{ scrollSnapType: "x mandatory" }}
       >
-        <div
-          id="day"
-          className="h-full flex-shrink-0 w-full order-1 lg:w-1/2"
-          style={{
-            scrollSnapAlign: "start",
-          }}
-        >
-          <div className="overflow-auto h-full border-r">
-            <TaskListHeader>{day}</TaskListHeader>
-            <Day />
-          </div>
-        </div>
-        <div className="border-r border-gray-400 h-full" />
-        <div
-          id="backlog"
-          className="flex-shrink-0 h-full w-full order-2 lg:w-1/2"
-          style={{
-            scrollSnapAlign: "start",
-          }}
-        >
+        <TaskListContainer>
+          <TaskListHeader>{day}</TaskListHeader>
+          <Day />
+        </TaskListContainer>
+        <TaskListContainer>
           <TaskListHeader>Backlog</TaskListHeader>
           <Backlog />
-        </div>
+        </TaskListContainer>
       </div>
     </div>
   );
@@ -258,7 +263,7 @@ function DayTask({ task }: { task: RenderedTask }) {
               _action: Actions.CREATE_TASK,
               id: task.id,
               name: "",
-              date: new Date(params.day).toISOString(),
+              date: parseParamDate(params.day).toISOString(),
             },
             { method: "post", action }
           );
@@ -391,44 +396,86 @@ function BacklogTask({ task }: { task: RenderedTask }) {
 }
 
 function Calendar() {
-  let { weeks } = useLoaderData<LoaderData>();
+  let { weeks, stats } = useLoaderData<LoaderData>();
   return (
     <div
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0,1fr))",
       }}
-      className="bg-gray-50 border-b xl:border-b-0"
+      className="bg-gray-50 border-b xl:border-b-0 max-h-40 overflow-auto xl:max-h-full"
     >
       {weeks.map((week) =>
-        week.map((day) => <CalendarDay key={day} datestring={day} />)
+        week.map((day) => (
+          <CalendarDay key={day} paramDate={day} incomplete={stats[day]} />
+        ))
       )}
     </div>
   );
 }
 
-function CalendarDay({ datestring }: { datestring: string }) {
-  let date = new Date(datestring);
-  let isMonthBoundary = isFirstDayOfMonth(date) || isLastDayOfMonth(date);
+// this component needs a lot of help, but for now this is a great MVP
+// - add virtual scrolling
+// - on load, scroll the active day to the second row
+// - don't bounce around when clicking
+// - more responsive clicking
+function CalendarDay({
+  paramDate,
+  incomplete,
+}: {
+  paramDate: string;
+  incomplete?: number;
+}) {
+  let date = parseParamDate(paramDate);
+  let isMonthBoundary = isFirstDayOfMonth(date);
+  let ref = React.useRef<HTMLAnchorElement>(null);
+  let transition = useTransition();
+  let isActive = paramDate === useParams().day;
+  let isPending =
+    transition.location?.pathname.split("/").slice(-1)[0] === paramDate;
+
+  // this is so gross right now.
+  // useLayoutEffect(() => {
+  //   if (isActive && ref.current) {
+  //     ref.current.scrollIntoView();
+  //   }
+  // }, [isActive]);
 
   return (
     <NavLink
-      to={`../${datestring}`}
+      ref={ref}
+      to={`../${paramDate}`}
       prefetch="intent"
+      style={{
+        WebkitTapHighlightColor: "transparent",
+      }}
       className={({ isActive }) =>
-        "relative flex items-center justify-center m-1 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm" +
+        "relative flex items-center justify-center m-2 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm active:bg-pink-500 active:text-white" +
         " " +
-        (isActive ? "bg-indigo-500 text-white" : "") +
-        " " +
-        (isToday(date) ? "bg-gray-200" : "")
+        (isActive || isPending
+          ? "bg-pink-500 text-white"
+          : isToday(date)
+          ? "bg-gray-200 text-gray-600"
+          : "text-gray-400")
       }
     >
       {isMonthBoundary && (
-        <div className="absolute top-0 left-0 uppercase text-gray-500 text-xs font-light">
+        <div className="absolute -top-3 left-0 right-0 text-center uppercase text-gray-700 text-xs font-bold">
           {format(date, "MMM")}
         </div>
       )}
-      {date.getDate()}
+      <div className="pb-1">{paramDate.split("-").slice(-1)[0]}</div>
+      {incomplete != null ? (
+        <div className="absolute bottom-1">
+          <div
+            className={
+              "rounded-full margin-auto h-2 w-2" +
+              " " +
+              (isActive ? "bg-white" : "bg-green-400")
+            }
+          />
+        </div>
+      ) : null}
     </NavLink>
   );
 }

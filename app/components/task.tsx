@@ -86,24 +86,26 @@ export function TaskList({
   }, []);
 
   return (
-    <div className="h-full relative">
-      <div ref={scrollRef} className="h-full overflow-auto pb-16">
-        {renderedTasks
-          .slice(0)
-          .sort(sortBy("createdAt"))
-          .map((task) => renderTask(task))}
-      </div>
-      <div className="px-4 py-4 absolute left-0 bottom-0 w-full">
-        <button
-          type="button"
-          onClick={addTask}
-          style={{
-            WebkitTapHighlightColor: "transparent",
-          }}
-          className="shadow flex items-center justify-between gap-1 w-full nm-flat-gray-100 active:nm-inset-gray-100 text-green-500 px-4 py-2 rounded text-sm font-bold uppercase"
-        >
-          New Task <PlusIcon />
-        </button>
+    <div ref={scrollRef} className="flex-1 overflow-auto">
+      <div>
+        <div>
+          {renderedTasks
+            .slice(0)
+            .sort(sortBy("createdAt"))
+            .map((task) => renderTask(task))}
+        </div>
+        <div className="px-4 py-4 w-full">
+          <button
+            type="button"
+            onClick={addTask}
+            style={{
+              WebkitTapHighlightColor: "transparent",
+            }}
+            className="shadow flex items-center justify-between gap-1 w-full nm-flat-gray-100 active:nm-inset-gray-100 text-green-500 px-4 py-2 rounded text-sm font-bold uppercase"
+          >
+            New Task <PlusIcon />
+          </button>
+        </div>
       </div>
     </div>
   );

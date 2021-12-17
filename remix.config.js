@@ -1,6 +1,6 @@
 module.exports = {
   appDirectory: "app",
-  browserBuildDirectory: "public/build",
+  assetBuildDirectory: "public/remix",
   publicPath: "/build/",
   serverBuildDirectory: "build",
   devServerPort: 8002

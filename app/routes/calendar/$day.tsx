@@ -50,7 +50,7 @@ export let loader: LoaderFunction = async ({ request, params }) => {
 
   invariant(params.day, "Expected params.day");
   // FIXME: need timezone offset of user to show what I mean to
-  let date = new Date(params.day);
+  let date = new Date();
   let weeks = getCalendarWeeks(date);
   let start = new Date(weeks[0][0]);
   let end = new Date(weeks.slice(-1)[0].slice(-1)[0]);

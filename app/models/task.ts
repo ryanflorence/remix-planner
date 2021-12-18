@@ -10,7 +10,6 @@ export function getBacklog(userId: string) {
 }
 
 export function getDayTasks(userId: string, day: string) {
-  console.log({ day });
   return db.task.findMany({
     where: { userId, date: day },
     orderBy: { createdAt: "asc" },

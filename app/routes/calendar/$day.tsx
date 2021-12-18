@@ -479,7 +479,7 @@ function CalendarDay({
       )}
       <div className="">{paramDate.split("-").slice(-1)[0]}</div>
       {total != null && (
-        <div className="absolute top-1 h-2/3 w-2/3">
+        <div className="absolute top-1 w-8">
           <CircularProgressbar
             value={((complete || 0) / total) * 100}
             styles={buildStyles({

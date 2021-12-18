@@ -485,7 +485,7 @@ function CalendarDay({
             styles={buildStyles({
               strokeLinecap: "butt",
               pathColor: "currentColor",
-              trailColor: "transparent",
+              trailColor: "hsl(0, 0%, 0%, 0.1)",
             })}
           />
         </div>

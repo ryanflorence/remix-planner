@@ -1,7 +1,6 @@
 import { db } from "~/util/db.server";
-import { format } from "date-fns";
-import { formatParamDate } from "~/util/date";
 import invariant from "tiny-invariant";
+import { formatParamDate } from "~/util/date";
 
 export function getBacklog(userId: string) {
   return db.task.findMany({
@@ -10,7 +9,8 @@ export function getBacklog(userId: string) {
   });
 }
 
-export function getDayTasks(userId: string, day: Date) {
+export function getDayTasks(userId: string, day: string) {
+  console.log({ day });
   return db.task.findMany({
     where: { userId, date: day },
     orderBy: { createdAt: "asc" },
@@ -19,7 +19,11 @@ export function getDayTasks(userId: string, day: Date) {
 
 export type CalendarStats = Awaited<ReturnType<typeof getCalendarStats>>;
 
-export async function getCalendarStats(userId: string, start: Date, end: Date) {
+export async function getTotalCountsByDate(
+  userId: string,
+  start: Date,
+  end: Date
+) {
   let result = await db.task.groupBy({
     by: ["date"],
     orderBy: { date: "asc" },
@@ -28,10 +32,9 @@ export async function getCalendarStats(userId: string, start: Date, end: Date) {
     },
     where: {
       userId: userId,
-      complete: false,
       date: {
-        gt: start,
-        lt: end,
+        gt: formatParamDate(start),
+        lt: formatParamDate(end),
       },
     },
   });
@@ -43,7 +46,7 @@ export async function getCalendarStats(userId: string, start: Date, end: Date) {
         "expected group.date (being one on one makes me nervous)"
       );
       return {
-        date: formatParamDate(group.date),
+        date: group.date,
         count: group._count.date,
       };
     })
@@ -51,4 +54,51 @@ export async function getCalendarStats(userId: string, start: Date, end: Date) {
       map[stat.date] = stat.count;
       return map;
     }, {} as { [date: string]: number });
+}
+
+export async function getCompletedCountsByDate(
+  userId: string,
+  start: Date,
+  end: Date
+) {
+  let result = await db.task.groupBy({
+    by: ["date"],
+    orderBy: { date: "asc" },
+    _count: {
+      date: true,
+    },
+    where: {
+      userId: userId,
+      complete: true,
+      date: {
+        gt: formatParamDate(start),
+        lt: formatParamDate(end),
+      },
+    },
+  });
+
+  return result
+    .map((group) => {
+      invariant(
+        group.date,
+        "expected group.date (being one on one makes me nervous)"
+      );
+      return {
+        date: group.date,
+        count: group._count.date,
+      };
+    })
+    .reduce((map, stat) => {
+      map[stat.date] = stat.count;
+      return map;
+    }, {} as { [date: string]: number });
+}
+
+export async function getCalendarStats(userId: string, start: Date, end: Date) {
+  let [total, incomplete] = await Promise.all([
+    getTotalCountsByDate(userId, start, end),
+    getCompletedCountsByDate(userId, start, end),
+  ]);
+
+  return { total, incomplete };
 }

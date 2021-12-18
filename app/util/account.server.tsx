@@ -1,4 +1,15 @@
+import { redirect } from "remix";
 import { db } from "~/util/db.server";
+
+export async function requireUser(email: string) {
+  let user = await db.user.findUnique({ where: { email } });
+
+  if (!user) {
+    throw redirect("/login");
+  }
+
+  return user;
+}
 
 export async function ensureUserAccount(email: string) {
   let user = await db.user.findUnique({ where: { email } });

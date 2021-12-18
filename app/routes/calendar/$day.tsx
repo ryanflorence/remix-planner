@@ -22,18 +22,22 @@ import {
 } from "~/components/task";
 
 import { requireAuthSession } from "~/util/auth.server";
-import { ensureUserAccount } from "~/util/account.server";
 import { CalendarStats, getCalendarStats, getDayTasks } from "~/models/task";
 import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
 import { getCalendarWeeks, parseParamDate } from "~/util/date";
-import { format, isFirstDayOfMonth, isLastDayOfMonth, isToday } from "date-fns";
+import { format, isFirstDayOfMonth, isToday } from "date-fns";
 import { db } from "~/util/db.server";
 import { useParentData } from "~/components/use-parent-data";
 import { CACHE_CONTROL } from "~/util/http";
-import { useLayoutEffect } from "~/components/layout-effect";
+import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
+
+import ringStyles from "react-circular-progressbar/dist/styles.css";
+
+export function links() {
+  return [{ rel: "stylesheet", href: ringStyles }];
+}
 
 type LoaderData = {
-  user: User;
   backlog: Task[];
   tasks: Task[];
   weeks: Array<Array<string>>;
@@ -41,22 +45,23 @@ type LoaderData = {
 };
 
 export let loader: LoaderFunction = async ({ request, params }) => {
-  invariant(params.day, "Expected params.day");
-  let date = new Date(params.day);
   let session = await requireAuthSession(request);
-  let user = await ensureUserAccount(session.get("auth"));
+  let userId = session.get("userId");
 
+  invariant(params.day, "Expected params.day");
+  // FIXME: need timezone offset of user to show what I mean to
+  let date = new Date(params.day);
   let weeks = getCalendarWeeks(date);
   let start = new Date(weeks[0][0]);
   let end = new Date(weeks.slice(-1)[0].slice(-1)[0]);
 
   let [tasks, stats] = await Promise.all([
-    getDayTasks(user.id, date),
-    getCalendarStats(user.id, start, end),
+    getDayTasks(userId, params.day),
+    getCalendarStats(userId, start, end),
   ]);
 
   return json(
-    { user, tasks, weeks, stats },
+    { tasks, weeks, stats },
     {
       headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
     }
@@ -65,7 +70,7 @@ export let loader: LoaderFunction = async ({ request, params }) => {
 
 export let action: ActionFunction = async ({ request, params }) => {
   let session = await requireAuthSession(request);
-  let user = await ensureUserAccount(session.get("auth"));
+  let userId = session.get("userId");
 
   let data = Object.fromEntries(await request.formData());
   invariant(typeof data._action === "string", "_action should be string");
@@ -84,7 +89,7 @@ export let action: ActionFunction = async ({ request, params }) => {
         create: {
           name: data.name,
           id: data.id,
-          userId: user.id,
+          userId,
           date: data.date,
         },
         update: { name: data.name, id: data.id },
@@ -112,7 +117,7 @@ export let action: ActionFunction = async ({ request, params }) => {
       invariant(params.day, "expcted params.day");
       return db.task.update({
         where: { id: data.id },
-        data: { date: new Date(params.day) },
+        data: { date: params.day },
       });
     }
 
@@ -202,6 +207,7 @@ function Day() {
   let { tasks } = useLoaderData<LoaderData>();
   let backlog = useParentData<Task[]>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
+
   return (
     <TaskList
       tasks={tasks.concat(immigrants)}
@@ -263,7 +269,7 @@ function DayTask({ task }: { task: RenderedTask }) {
               _action: Actions.CREATE_TASK,
               id: task.id,
               name: "",
-              date: parseParamDate(params.day).toISOString(),
+              date: params.day,
             },
             { method: "post", action }
           );
@@ -407,7 +413,12 @@ function Calendar() {
     >
       {weeks.map((week) =>
         week.map((day) => (
-          <CalendarDay key={day} paramDate={day} incomplete={stats[day]} />
+          <CalendarDay
+            key={day}
+            paramDate={day}
+            complete={stats.incomplete[day]}
+            total={stats.total[day]}
+          />
         ))
       )}
     </div>
@@ -421,10 +432,12 @@ function Calendar() {
 // - more responsive clicking
 function CalendarDay({
   paramDate,
-  incomplete,
+  complete,
+  total,
 }: {
   paramDate: string;
-  incomplete?: number;
+  complete?: number;
+  total?: number;
 }) {
   let date = parseParamDate(paramDate);
   let isMonthBoundary = isFirstDayOfMonth(date);
@@ -450,32 +463,33 @@ function CalendarDay({
         WebkitTapHighlightColor: "transparent",
       }}
       className={({ isActive }) =>
-        "relative flex items-center justify-center m-2 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm active:bg-pink-500 active:text-white" +
+        "relative flex items-center justify-center m-2 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm" +
         " " +
         (isActive || isPending
           ? "bg-pink-500 text-white"
           : isToday(date)
-          ? "bg-gray-200 text-gray-600"
+          ? "text-gray-900 shadow"
           : "text-gray-400")
       }
     >
       {isMonthBoundary && (
-        <div className="absolute -top-3 left-0 right-0 text-center uppercase text-gray-700 text-xs font-bold">
+        <div className="absolute -top-4 left-0 right-0 text-center uppercase text-gray-700 text-xs font-bold">
           {format(date, "MMM")}
         </div>
       )}
-      <div className="pb-1">{paramDate.split("-").slice(-1)[0]}</div>
-      {incomplete != null ? (
-        <div className="absolute bottom-1">
-          <div
-            className={
-              "rounded-full margin-auto h-2 w-2" +
-              " " +
-              (isActive ? "bg-white" : "bg-green-400")
-            }
+      <div className="">{paramDate.split("-").slice(-1)[0]}</div>
+      {total != null && (
+        <div className="absolute top-1 h-2/3 w-2/3">
+          <CircularProgressbar
+            value={((complete || 0) / total) * 100}
+            styles={buildStyles({
+              strokeLinecap: "butt",
+              pathColor: "currentColor",
+              trailColor: "transparent",
+            })}
           />
         </div>
-      ) : null}
+      )}
     </NavLink>
   );
 }

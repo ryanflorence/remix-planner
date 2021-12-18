@@ -21,6 +21,7 @@ model User {
   email   String   @unique
   buckets Bucket[]
   tasks   Task[]
+  // FIXME: add timezone offset
 }
 
 model Bucket {
@@ -44,8 +45,8 @@ model Task {
   updatedAt DateTime @updatedAt
 
   name     String
-  complete Boolean   @default(false)
-  date     DateTime?
+  complete Boolean @default(false)
+  date     String?
 
   User   User   @relation(fields: [userId], references: [id])
   userId String

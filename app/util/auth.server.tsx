@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import createMailgun from "mailgun-js";
 import type { ActionFunction, LoaderFunction, Session } from "remix";
 import { createCookieSessionStorage, json, redirect } from "remix";
+import { ensureUserAccount } from "./account.server";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has
@@ -171,6 +172,9 @@ export let validateMagicLinkLoader: LoaderFunction = async ({ request }) => {
   // might want to create a db session instead of a cookie session
   // might set the user.id or session.id from a db instead of email
   if (session) session.set("auth", magicLinkPayload.email);
+
+  let user = await ensureUserAccount(magicLinkPayload.email);
+  session.set("userId", user.id);
 
   return redirect(magicLinkPayload.landingPage, {
     headers: {

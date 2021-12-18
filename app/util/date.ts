@@ -24,5 +24,6 @@ export function formatParamDate(date: Date) {
 }
 
 export function parseParamDate(paramDate: string) {
-  return parse(paramDate, PARAM_FORMAT, new Date());
+  let [year, month, day] = paramDate.substring(0, 10).split("-");
+  return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day));
 }

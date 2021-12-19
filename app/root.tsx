@@ -1,11 +1,15 @@
-import { Meta, Links, Scripts, LiveReload, useCatch, Outlet } from "remix";
+import { Meta, Links, Scripts, LiveReload, Outlet } from "remix";
+import ringStyles from "react-circular-progressbar/dist/styles.css";
 import styles from "~/tailwind.css";
 
 export function links() {
-  return [{ rel: "stylesheet", href: styles }];
+  return [
+    { rel: "stylesheet", href: styles },
+    { rel: "stylesheet", href: ringStyles },
+  ];
 }
 
-function Document({ children }: { children: React.ReactNode }) {
+export default function Root() {
   return (
     <html lang="en" className="overflow-hidden w-full">
       <head>
@@ -19,43 +23,10 @@ function Document({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 fixed overflow-hidden h-full w-full">
-        {children}
+        <Outlet />
         <Scripts />
         {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>
     </html>
-  );
-}
-
-export default function App() {
-  return (
-    <Document>
-      <Outlet />
-    </Document>
-  );
-}
-
-export function ErrorBoundary({ error }: { error: Error }) {
-  console.error(error);
-  return (
-    <Document>
-      <h1>App Error</h1>
-      <pre>{error.stack}</pre>
-      <p>
-        Replace this UI with what you want users to see when your app throws
-        uncaught errors.
-      </p>
-    </Document>
-  );
-}
-
-export function CatchBoundary() {
-  let caught = useCatch();
-  return (
-    <Document>
-      <h1>
-        {caught.status} {caught.statusText}
-      </h1>
-    </Document>
   );
 }

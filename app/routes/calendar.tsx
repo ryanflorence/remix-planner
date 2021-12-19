@@ -16,7 +16,7 @@ export let loader: LoaderFunction = async ({ request, params }) => {
   let backlog = await getBacklog(userId);
 
   return json(backlog, {
-    headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
+    headers: { "Cache-Control": CACHE_CONTROL.none },
   });
 };
 

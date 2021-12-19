@@ -12,7 +12,7 @@ import invariant from "tiny-invariant";
 import React, { ReactNode } from "react";
 
 import type { LoaderFunction, ActionFunction } from "remix";
-import type { Task, User } from "@prisma/client";
+import type { Task } from "@prisma/client";
 import {
   RenderedTask,
   TaskItem,
@@ -30,12 +30,6 @@ import { db } from "~/util/db.server";
 import { useParentData } from "~/components/use-parent-data";
 import { CACHE_CONTROL } from "~/util/http";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-
-import ringStyles from "react-circular-progressbar/dist/styles.css";
-
-export function links() {
-  return [{ rel: "stylesheet", href: ringStyles }];
-}
 
 type LoaderData = {
   backlog: Task[];
@@ -63,7 +57,7 @@ export let loader: LoaderFunction = async ({ request, params }) => {
   return json(
     { tasks, weeks, stats },
     {
-      headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
+      headers: { "Cache-Control": CACHE_CONTROL.none },
     }
   );
 };
@@ -425,11 +419,10 @@ function Calendar() {
   );
 }
 
-// this component needs a lot of help, but for now this is a great MVP
+// TODO: this component needs a lot of help, but for now this is a great MVP
 // - add virtual scrolling
 // - on load, scroll the active day to the second row
 // - don't bounce around when clicking
-// - more responsive clicking
 function CalendarDay({
   paramDate,
   complete,
@@ -458,7 +451,6 @@ function CalendarDay({
     <NavLink
       ref={ref}
       to={`../${paramDate}`}
-      prefetch="intent"
       style={{
         WebkitTapHighlightColor: "transparent",
       }}

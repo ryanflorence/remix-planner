@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "remix";
 import invariant from "tiny-invariant";
-import React, { ReactNode } from "react";
+import React from "react";
 
 import type { LoaderFunction, ActionFunction } from "remix";
 import type { Task } from "@prisma/client";
@@ -22,20 +22,18 @@ import {
 } from "~/components/task";
 
 import { requireAuthSession } from "~/util/auth.server";
-import { CalendarStats, getCalendarStats, getDayTasks } from "~/models/task";
+import { getDayTasks } from "~/models/task";
 import { CheckIcon, LeftArrowIcon, RightArrowIcon } from "~/components/icons";
-import { getCalendarWeeks, parseParamDate } from "~/util/date";
+import { parseParamDate } from "~/util/date";
 import { format, isFirstDayOfMonth, isToday } from "date-fns";
 import { db } from "~/util/db.server";
 import { useParentData } from "~/components/use-parent-data";
 import { CACHE_CONTROL } from "~/util/http";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
+import { CalendarLoaderData } from "../calendar";
 
 type LoaderData = {
-  backlog: Task[];
   tasks: Task[];
-  weeks: Array<Array<string>>;
-  stats: CalendarStats;
 };
 
 export let loader: LoaderFunction = async ({ request, params }) => {
@@ -43,23 +41,13 @@ export let loader: LoaderFunction = async ({ request, params }) => {
   let userId = session.get("userId");
 
   invariant(params.day, "Expected params.day");
-  // FIXME: need timezone offset of user to show what I mean to
-  let date = new Date();
-  let weeks = getCalendarWeeks(date);
-  let start = new Date(weeks[0][0]);
-  let end = new Date(weeks.slice(-1)[0].slice(-1)[0]);
 
-  let [tasks, stats] = await Promise.all([
-    getDayTasks(userId, params.day),
-    getCalendarStats(userId, start, end),
-  ]);
+  let tasks = await getDayTasks(userId, params.day);
+  let data: LoaderData = { tasks };
 
-  return json(
-    { tasks, weeks, stats },
-    {
-      headers: { "Cache-Control": CACHE_CONTROL.none },
-    }
-  );
+  return json(data, {
+    headers: { "Cache-Control": CACHE_CONTROL.safePrefetch },
+  });
 };
 
 export let action: ActionFunction = async ({ request, params }) => {
@@ -184,22 +172,9 @@ export default function DayRoute() {
   );
 }
 
-function Headers({ children }: { children: ReactNode }) {
-  return <div children={children} />;
-}
-
-function ColumnHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="hidden flex-1 lg:block bg-gray-50 text-center px-4 py-2 font-bold uppercase text-sm active:bg-blue-300 text-gray-500"
-      children={children}
-    />
-  );
-}
-
 function Day() {
   let { tasks } = useLoaderData<LoaderData>();
-  let backlog = useParentData<Task[]>();
+  let { backlog } = useParentData<CalendarLoaderData>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
 
   return (
@@ -327,7 +302,7 @@ function useImmigrants(action: Actions, tasks: Task[]): Task[] {
 
 function Backlog() {
   let { tasks } = useLoaderData<LoaderData>();
-  let backlog = useParentData<Task[]>();
+  let { backlog } = useParentData<CalendarLoaderData>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_BACKLOG, tasks);
 
   return (
@@ -396,7 +371,7 @@ function BacklogTask({ task }: { task: RenderedTask }) {
 }
 
 function Calendar() {
-  let { weeks, stats } = useLoaderData<LoaderData>();
+  let { weeks, stats } = useParentData<CalendarLoaderData>();
   return (
     <div
       style={{

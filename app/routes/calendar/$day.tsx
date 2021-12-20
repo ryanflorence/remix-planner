@@ -451,6 +451,7 @@ function CalendarDay({
     <NavLink
       ref={ref}
       to={`../${paramDate}`}
+      prefetch="intent"
       style={{
         WebkitTapHighlightColor: "transparent",
       }}

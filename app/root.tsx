@@ -9,6 +9,12 @@ export function links() {
   ];
 }
 
+export function meta() {
+  return {
+    title: "Ryan's Planner",
+  };
+}
+
 export default function Root() {
   return (
     <html lang="en" className="overflow-hidden w-full">

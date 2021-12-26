@@ -3,7 +3,7 @@ import { Task } from "@prisma/client";
 import sortBy from "sort-by";
 import cuid from "cuid";
 import React from "react";
-import { useFetcher, useFormAction } from "remix";
+import { useFetcher } from "remix";
 import { PlusIcon } from "./icons";
 import { useLayoutEffect } from "./layout-effect";
 

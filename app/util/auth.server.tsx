@@ -40,8 +40,7 @@ let authSession = createCookieSessionStorage({
   },
 });
 
-// 30 days
-let sessionMaxAge = /*seconds*/ 60 * /*hrs*/ 24 * /*days*/ 30;
+let sessionMaxAge = 604800 * 52;
 
 /*******************************************************************************
  * 2. The whole point of authentication is to make sure we have a valid user

@@ -1,6 +1,17 @@
-import { Meta, Links, Scripts, LiveReload, Outlet } from "remix";
+import {
+  Meta,
+  Links,
+  Scripts,
+  LiveReload,
+  Outlet,
+  useLoaderData,
+  NavLink,
+} from "remix";
+import type { LoaderFunction } from "remix";
 import ringStyles from "react-circular-progressbar/dist/styles.css";
+import { getAuthSession } from "~/util/auth.server";
 import styles from "~/tailwind.css";
+import { ArchiveIcon, CalendarIcon, LogoutIcon } from "./components/icons";
 
 export function links() {
   return [
@@ -10,12 +21,17 @@ export function links() {
 }
 
 export function meta() {
-  return {
-    title: "Ryan's Planner",
-  };
+  return { title: "Ryan's Planner" };
 }
 
+export let loader: LoaderFunction = async ({ request }) => {
+  let session = await getAuthSession(request);
+  return { authenticated: Boolean(session) };
+};
+
 export default function Root() {
+  let { authenticated } = useLoaderData();
+
   return (
     <html lang="en" className="overflow-hidden w-full">
       <head>
@@ -29,10 +45,48 @@ export default function Root() {
         <Links />
       </head>
       <body className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 fixed overflow-hidden h-full w-full">
-        <Outlet />
+        {authenticated ? (
+          <div className="flex flex-col overflow-hidden h-full lg:flex-row">
+            <nav className="flex justify-around py-4 bg-gray-900 text-gray-500 lg:flex-col lg:px-4 lg:justify-start lg:gap-4">
+              <PrimaryNavLink to="/calendar">
+                <CalendarIcon />
+              </PrimaryNavLink>
+              <PrimaryNavLink to="/buckets">
+                <ArchiveIcon />
+              </PrimaryNavLink>
+              <div className="hidden lg:block lg:flex-1" />
+              <form method="post" action="/auth/logout" className="lg:">
+                <button type="submit">
+                  <LogoutIcon />
+                </button>
+              </form>
+            </nav>
+            <div className="flex-1 overflow-hidden">
+              <Outlet />
+            </div>
+          </div>
+        ) : (
+          <Outlet />
+        )}
         <Scripts />
         {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>
     </html>
+  );
+}
+
+function PrimaryNavLink({
+  to,
+  children,
+}: {
+  to: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <NavLink
+      to={to}
+      children={children}
+      className={({ isActive }) => (isActive ? "text-white" : "")}
+    />
   );
 }

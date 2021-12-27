@@ -31,6 +31,7 @@ import { useParentData } from "~/components/use-parent-data";
 import { CACHE_CONTROL } from "~/util/http";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { CalendarLoaderData } from "../calendar";
+import { useLayoutEffect } from "~/components/layout-effect";
 
 type LoaderData = {
   tasks: Task[];
@@ -380,7 +381,7 @@ function Calendar() {
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0,1fr))",
       }}
-      className="bg-gray-50 border-b xl:border-b-0 max-h-40 overflow-auto xl:max-h-full"
+      className="bg-gray-50 border-b xl:border-b-0 max-h-52 overflow-auto xl:max-h-full"
     >
       {weeks.map((week) =>
         week.map((day) => (
@@ -418,11 +419,11 @@ function CalendarDay({
     transition.location?.pathname.split("/").slice(-1)[0] === paramDate;
 
   // this is so gross right now.
-  // useLayoutEffect(() => {
-  //   if (isActive && ref.current) {
-  //     ref.current.scrollIntoView();
-  //   }
-  // }, [isActive]);
+  useLayoutEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView();
+    }
+  }, []);
 
   return (
     <NavLink
@@ -431,6 +432,7 @@ function CalendarDay({
       prefetch="intent"
       style={{
         WebkitTapHighlightColor: "transparent",
+        scrollMarginTop: "1rem",
       }}
       className={({ isActive }) =>
         "relative flex items-center justify-center m-2 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm" +

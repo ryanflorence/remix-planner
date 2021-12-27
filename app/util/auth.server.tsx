@@ -190,7 +190,7 @@ export let validateMagicLinkLoader: LoaderFunction = async ({ request }) => {
  */
 export let logoutAction: ActionFunction = async ({ request }) => {
   let session = await authSession.getSession();
-  return json(null, {
+  return redirect("/", {
     headers: {
       "Set-Cookie": await authSession.destroySession(session),
     },

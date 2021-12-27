@@ -176,11 +176,13 @@ function Day() {
   let { tasks } = useLoaderData<LoaderData>();
   let { backlog } = useParentData<CalendarLoaderData>();
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
+  let params = useParams();
 
   return (
     <TaskList
       tasks={tasks.concat(immigrants)}
       renderTask={(task) => <DayTask key={task.id} task={task} />}
+      date={params.day}
     />
   );
 }

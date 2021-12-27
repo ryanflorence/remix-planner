@@ -3,7 +3,7 @@ import { Task } from "@prisma/client";
 import sortBy from "sort-by";
 import cuid from "cuid";
 import React from "react";
-import { useFetcher } from "remix";
+import { Form, useFetcher } from "remix";
 import { PlusIcon } from "./icons";
 import { useLayoutEffect } from "./layout-effect";
 
@@ -70,10 +70,13 @@ export function useOptimisticTasks(
 export function TaskList({
   tasks,
   renderTask,
+  date,
 }: {
   tasks: Task[];
   renderTask: (task: RenderedTask) => React.ReactNode;
+  date?: string;
 }) {
+  let [peNewId] = React.useState(() => cuid());
   let [renderedTasks, addTask] = useOptimisticTasks(tasks);
   let scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -95,16 +98,26 @@ export function TaskList({
             .map((task) => renderTask(task))}
         </div>
         <div className="px-4 py-4 w-full">
-          <button
-            type="button"
-            onClick={addTask}
-            style={{
-              WebkitTapHighlightColor: "transparent",
-            }}
-            className="shadow flex items-center justify-between gap-1 w-full nm-flat-gray-100 active:nm-inset-gray-100 text-green-500 px-4 py-2 rounded text-sm font-bold uppercase"
-          >
-            New Task <PlusIcon />
-          </button>
+          {/* PE Form, not used when JS is loaded */}
+          <Form method="post" onSubmit={(e) => e.preventDefault()}>
+            <input type="hidden" name="_action" value={Actions.CREATE_TASK} />
+            <input type="hidden" name="id" value={peNewId} />
+            <input type="hidden" name="name" value="" />
+            {date && <input type="hidden" name="date" value={date} />}
+            <button
+              type="submit"
+              onClick={(event) => {
+                addTask();
+                event.preventDefault();
+              }}
+              style={{
+                WebkitTapHighlightColor: "transparent",
+              }}
+              className="shadow flex items-center justify-between gap-1 w-full nm-flat-gray-100 active:nm-inset-gray-100 text-green-500 px-4 py-2 rounded text-sm font-bold uppercase"
+            >
+              New Task <PlusIcon />
+            </button>
+          </Form>
         </div>
       </div>
     </div>

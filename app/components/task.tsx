@@ -1,11 +1,29 @@
-import { Task } from "@prisma/client";
 // @ts-expect-error
 import sortBy from "sort-by";
-import cuid from "cuid";
 import React from "react";
-import { Form, useFetcher } from "remix";
-import { PlusIcon } from "./icons";
+import { Task } from "@prisma/client";
+import { format, isFirstDayOfMonth, isToday } from "date-fns";
+import cuid from "cuid";
+import {
+  Form,
+  NavLink,
+  useFetcher,
+  useFetchers,
+  useFormAction,
+  useTransition,
+} from "remix";
+
+import {
+  ArrowButton,
+  CheckIcon,
+  LeftArrowIcon,
+  PlusIcon,
+  RightArrowIcon,
+} from "./icons";
 import { useLayoutEffect } from "./layout-effect";
+import { parseParamDate } from "~/util/date";
+import { CalendarStats } from "~/models/task";
+import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 
 export enum Actions {
   CREATE_TASK = "CREATE_TASK",
@@ -70,11 +88,11 @@ export function useOptimisticTasks(
 export function TaskList({
   tasks,
   renderTask,
-  date,
+  day: date,
 }: {
   tasks: Task[];
   renderTask: (task: RenderedTask) => React.ReactNode;
-  date?: string;
+  day?: string;
 }) {
   let [peNewId] = React.useState(() => cuid());
   let [renderedTasks, addTask] = useOptimisticTasks(tasks);
@@ -211,4 +229,330 @@ function placeCaretAtEnd(node: HTMLElement) {
     sel.removeAllRanges();
     sel.addRange(range);
   }
+}
+
+export function DayTaskList({
+  day,
+  tasks,
+  backlog,
+}: {
+  day: string;
+  tasks: Task[];
+  backlog: Task[];
+}) {
+  let formattedDate = format(parseParamDate(day), "E, LLL do");
+  return (
+    <>
+      <TaskListHeader>{formattedDate}</TaskListHeader>
+      <DayTasks tasks={tasks} backlog={backlog} day={day} />
+    </>
+  );
+}
+
+function DayTasks({
+  tasks,
+  backlog,
+  day,
+}: {
+  tasks: Task[];
+  backlog: Task[];
+  day: string;
+}) {
+  let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
+
+  return (
+    <TaskList
+      tasks={tasks.concat(immigrants)}
+      renderTask={(task) => <DayTask key={task.id} task={task} day={day} />}
+      day={day}
+    />
+  );
+}
+
+function DayTask({ task, day }: { task: RenderedTask; day: string }) {
+  let fetcher = useFetcher();
+
+  // TODO: move this to a generic route so it doesn't matter which route
+  // is calling this
+  let action = useFormAction();
+
+  // optimistic "complete" status
+  let complete =
+    fetcher.submission?.formData.get("_action") === Actions.MARK_COMPLETE
+      ? true
+      : fetcher.submission?.formData.get("_action") === Actions.MARK_INCOMPLETE
+      ? false
+      : Boolean(task.complete);
+
+  let moving =
+    fetcher.submission?.formData.get("_action") ===
+    Actions.MOVE_TASK_TO_BACKLOG;
+
+  let deleting =
+    fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
+
+  return (
+    <TaskItem key={task.id} hide={moving || deleting}>
+      <fetcher.Form method="post">
+        <input
+          type="hidden"
+          name="_action"
+          value={complete ? Actions.MARK_INCOMPLETE : Actions.MARK_COMPLETE}
+        />
+        <input type="hidden" name="id" value={task.id} />
+        <button
+          style={{
+            WebkitTapHighlightColor: "transparent",
+          }}
+          className={
+            "text-blue-500 p-2 rounded-full nm-flat-gray-50-sm active:nm-inset-gray-50-sm"
+          }
+        >
+          <CheckIcon className={complete ? "" : "opacity-0"} />
+        </button>
+      </fetcher.Form>
+
+      <EditableTask
+        task={task}
+        onCreate={() => {
+          fetcher.submit(
+            {
+              _action: Actions.CREATE_TASK,
+              id: task.id,
+              name: "",
+              date: day,
+            },
+            { method: "post", action }
+          );
+        }}
+        onChange={(value) => {
+          fetcher.submit(
+            { _action: Actions.UPDATE_TASK_NAME, id: task.id, name: value },
+            { method: "post", action }
+          );
+        }}
+        onDelete={() => {
+          fetcher.submit(
+            { _action: Actions.DELETE_TASK, id: task.id },
+            { method: "post", action }
+          );
+        }}
+      />
+
+      <fetcher.Form method="post">
+        <input
+          type="hidden"
+          name="_action"
+          value={Actions.MOVE_TASK_TO_BACKLOG}
+        />
+        <input type="hidden" name="id" value={task.id} />
+        <ArrowButton>
+          <RightArrowIcon />
+        </ArrowButton>
+      </fetcher.Form>
+    </TaskItem>
+  );
+}
+
+function TaskListHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="bg-gray-100 border-b text-center p-4 font-bold uppercase text-sm text-black"
+      children={children}
+    />
+  );
+}
+
+function useImmigrants(action: Actions, tasks: Task[]): Task[] {
+  let fetchers = useFetchers();
+  let immigrants: Task[] = [];
+  let tasksMap = new Map<string, Task>();
+
+  // if there are some fetchers, fill up the map to avoid a nested loop next
+  if (fetchers.length) {
+    for (let task of tasks) {
+      tasksMap.set(task.id, task);
+    }
+  }
+
+  // find the tasks that are moving to the other list
+  for (let fetcher of fetchers) {
+    if (fetcher.submission?.formData.get("_action") === action) {
+      let id = fetcher.submission.formData.get("id");
+      if (typeof id === "string") {
+        let task = tasksMap.get(id);
+        if (task) {
+          immigrants.push(task);
+        }
+      }
+    }
+  }
+
+  return immigrants;
+}
+
+export function BacklogTaskList({
+  tasks,
+  backlog,
+}: {
+  tasks: Task[];
+  backlog: Task[];
+}) {
+  return (
+    <>
+      <TaskListHeader>Backlog</TaskListHeader>
+      <Backlog tasks={tasks} backlog={backlog} />
+    </>
+  );
+}
+
+function Backlog({ tasks, backlog }: { tasks: Task[]; backlog: Task[] }) {
+  let immigrants = useImmigrants(Actions.MOVE_TASK_TO_BACKLOG, tasks);
+
+  return (
+    <TaskList
+      tasks={backlog.concat(immigrants)}
+      renderTask={(task) => <BacklogTask key={task.id} task={task} />}
+    />
+  );
+}
+
+function BacklogTask({ task }: { task: RenderedTask }) {
+  // TODO: move this to a generic route so it doesn't matter which route
+  // is calling this
+  let action = useFormAction();
+  let fetcher = useFetcher();
+  let moving =
+    fetcher.submission?.formData.get("_action") === Actions.MOVE_TASK_TO_DAY;
+
+  let deleting =
+    fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
+
+  return (
+    <TaskItem key={task.id} hide={moving || deleting}>
+      <fetcher.Form method="post">
+        <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
+        <input type="hidden" name="id" value={task.id} />
+        <ArrowButton>
+          <LeftArrowIcon />
+        </ArrowButton>
+      </fetcher.Form>
+      <EditableTask
+        task={task}
+        onCreate={() => {
+          fetcher.submit(
+            { _action: Actions.CREATE_TASK, id: task.id, name: "" },
+            { method: "post", action }
+          );
+        }}
+        onChange={(value) => {
+          fetcher.submit(
+            { _action: Actions.UPDATE_TASK_NAME, id: task.id, name: value },
+            { method: "post", action }
+          );
+        }}
+        onDelete={() => {
+          fetcher.submit(
+            { _action: Actions.DELETE_TASK, id: task.id },
+            { method: "post", action }
+          );
+        }}
+      />
+    </TaskItem>
+  );
+}
+
+export function Calendar({
+  weeks,
+  stats,
+  day: paramDate,
+}: {
+  stats: CalendarStats;
+  weeks: Array<Array<string>>;
+  day: string;
+}) {
+  return (
+    <>
+      {weeks.map((week) =>
+        week.map((day) => (
+          <CalendarDay
+            key={day}
+            isActive={paramDate === day}
+            day={day}
+            complete={stats.incomplete[day]}
+            total={stats.total[day]}
+          />
+        ))
+      )}
+    </>
+  );
+}
+
+// TODO: this component needs a lot of help, but for now this is a great MVP
+// - add virtual scrolling
+// - on load, scroll the active day to the second row
+// - don't bounce around when clicking
+function CalendarDay({
+  day,
+  complete,
+  total,
+  isActive,
+}: {
+  day: string;
+  complete?: number;
+  total?: number;
+  isActive: boolean;
+}) {
+  let date = parseParamDate(day);
+  let isMonthBoundary = isFirstDayOfMonth(date);
+  let ref = React.useRef<HTMLAnchorElement>(null);
+  let transition = useTransition();
+  let isPending = transition.location?.pathname.split("/").slice(-1)[0] === day;
+
+  // this is so gross right now.
+  useLayoutEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView();
+    }
+  }, []);
+
+  return (
+    <NavLink
+      ref={ref}
+      to={`../${day}`}
+      prefetch="intent"
+      style={{
+        WebkitTapHighlightColor: "transparent",
+        scrollMarginTop: "3.5rem",
+      }}
+      className={({ isActive }) =>
+        "relative flex items-center justify-center m-2 h-10 font-semibold rounded-lg xl:w-12 xl:h-10 text-sm" +
+        " " +
+        (isActive || isPending
+          ? "bg-pink-500 text-white"
+          : isToday(date)
+          ? "text-gray-900 shadow"
+          : "text-gray-400")
+      }
+    >
+      {isMonthBoundary && (
+        <div className="absolute -top-4 left-0 right-0 text-center uppercase text-gray-700 text-xs font-bold">
+          {format(date, "MMM")}
+        </div>
+      )}
+      <div className="">{day.split("-").slice(-1)[0]}</div>
+      {total != null && (
+        <div className="absolute top-1 w-8">
+          <CircularProgressbar
+            value={((complete || 0) / total) * 100}
+            styles={buildStyles({
+              strokeLinecap: "butt",
+              pathColor: "currentColor",
+              trailColor: "hsl(0, 0%, 0%, 0.1)",
+            })}
+          />
+        </div>
+      )}
+    </NavLink>
+  );
 }

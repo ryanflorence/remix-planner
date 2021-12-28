@@ -47,7 +47,7 @@ export default function Root() {
       <body className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 fixed overflow-hidden h-full w-full">
         {authenticated ? (
           <div className="flex flex-col overflow-hidden h-full lg:flex-row">
-            <nav className="flex justify-around py-4 bg-gray-900 text-gray-500 lg:flex-col lg:px-4 lg:justify-start lg:gap-4">
+            <nav className="flex justify-around py-3 bg-gray-900 text-gray-500 lg:flex-col lg:py-4 lg:px-4 lg:justify-start lg:gap-6">
               <PrimaryNavLink to="/calendar">
                 <CalendarIcon />
               </PrimaryNavLink>

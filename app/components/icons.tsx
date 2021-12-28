@@ -121,3 +121,15 @@ export function LogoutIcon() {
     </svg>
   );
 }
+
+export function ArrowButton({ children }: { children: React.ReactNode }) {
+  return (
+    <button
+      style={{
+        WebkitTapHighlightColor: "transparent",
+      }}
+      className="text-gray-400 nm-flat-gray-50-xs active:nm-inset-gray-50-xs rounded-lg p-2"
+      children={children}
+    />
+  );
+}

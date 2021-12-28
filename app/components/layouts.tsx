@@ -7,10 +7,6 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 export function SidebarNav({ children }: { children: React.ReactNode }) {
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(7, minmax(0,1fr))",
-      }}
       className="bg-gray-50 border-b xl:border-b-0 max-h-52 overflow-auto xl:max-h-full"
       children={children}
     />

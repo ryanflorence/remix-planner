@@ -470,7 +470,12 @@ export function Calendar({
   day: string;
 }) {
   return (
-    <>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(7, minmax(0,1fr))",
+      }}
+    >
       {weeks.map((week) =>
         week.map((day) => (
           <CalendarDay
@@ -482,7 +487,7 @@ export function Calendar({
           />
         ))
       )}
-    </>
+    </div>
   );
 }
 

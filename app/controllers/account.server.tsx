@@ -1,5 +1,5 @@
 import { redirect } from "remix";
-import { db } from "~/util/db.server";
+import { db } from "~/models/db.server";
 
 export async function requireUser(email: string) {
   let user = await db.user.findUnique({ where: { email } });

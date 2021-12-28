@@ -340,3 +340,10 @@ async function sendMagicLinkEmail(
     console.log(link);
   }
 }
+
+export async function requireUserId(request: Request) {
+  let session = await requireAuthSession(request);
+  let userId = session.get("userId");
+  if (typeof userId !== "string") throw redirect("/login");
+  return userId;
+}

@@ -1,6 +1,16 @@
-import { db } from "~/util/db.server";
+import { db } from "~/models/db.server";
 import invariant from "tiny-invariant";
 import { formatParamDate } from "~/util/date";
+
+export enum Actions {
+  CREATE_TASK = "CREATE_TASK",
+  UPDATE_TASK_NAME = "UPDATE_TASK_NAME",
+  MOVE_TASK_TO_DAY = "MOVE_TASK_TO_DAY",
+  MOVE_TASK_TO_BACKLOG = "MOVE_TASK_TO_BACKLOG",
+  MARK_COMPLETE = "MARK_COMPLETE",
+  MARK_INCOMPLETE = "MARK_INCOMPLETE",
+  DELETE_TASK = "DELETE_TASK",
+}
 
 export function getBacklog(userId: string) {
   return db.task.findMany({
@@ -100,4 +110,49 @@ export async function getCalendarStats(userId: string, start: Date, end: Date) {
   ]);
 
   return { total, incomplete };
+}
+
+export function markComplete(id: string) {
+  return db.task.update({
+    where: { id },
+    data: { complete: true },
+  });
+}
+
+export function createOrUpdateTask(
+  userId: string,
+  id: string,
+  name: string,
+  date?: string
+) {
+  return db.task.upsert({
+    where: { id },
+    create: { name, id, userId, date },
+    update: { name, id },
+  });
+}
+
+export function markIncomplete(id: string) {
+  return db.task.update({
+    where: { id },
+    data: { complete: false },
+  });
+}
+
+export function addDate(id: string, date: string) {
+  return db.task.update({
+    where: { id },
+    data: { date },
+  });
+}
+
+export function removeDate(id: string) {
+  return db.task.update({
+    where: { id },
+    data: { date: null },
+  });
+}
+
+export function deleteTask(id: string) {
+  return db.task.delete({ where: { id } });
 }

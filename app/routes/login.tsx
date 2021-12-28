@@ -4,7 +4,7 @@ import { Button, TextInput } from "~/components/forms";
 export {
   loginAction as action,
   loginLoader as loader,
-} from "~/util/auth.server";
+} from "~/controllers/auth.server";
 
 export default function Index() {
   let loaderData = useLoaderData();

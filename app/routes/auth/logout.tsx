@@ -1,5 +1,5 @@
 import { Link, redirect } from "remix";
-export { logoutAction as action } from "~/util/auth.server";
+export { logoutAction as action } from "~/controllers/auth.server";
 
 // FIXME: if you redirect here it doesn't reload all data, it acts like a normal
 // data diff!

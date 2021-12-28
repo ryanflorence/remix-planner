@@ -22,18 +22,8 @@ import {
 } from "./icons";
 import { useLayoutEffect } from "./layout-effect";
 import { parseParamDate } from "~/util/date";
-import { CalendarStats } from "~/models/task";
+import { Actions, CalendarStats } from "~/models/task";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-
-export enum Actions {
-  CREATE_TASK = "CREATE_TASK",
-  UPDATE_TASK_NAME = "UPDATE_TASK_NAME",
-  MOVE_TASK_TO_DAY = "MOVE_TASK_TO_DAY",
-  MOVE_TASK_TO_BACKLOG = "MOVE_TASK_TO_BACKLOG",
-  MARK_COMPLETE = "MARK_COMPLETE",
-  MARK_INCOMPLETE = "MARK_INCOMPLETE",
-  DELETE_TASK = "DELETE_TASK",
-}
 
 export type NewTask = {
   id: string;

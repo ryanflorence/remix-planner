@@ -142,7 +142,7 @@ export function TaskItem({
   hide?: boolean;
 }) {
   return hide ? null : (
-    <div className="flex items-center border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4">
+    <div className="flex items-start border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4">
       {children}
     </div>
   );
@@ -183,15 +183,22 @@ export function EditableTask({
   return (
     <div
       ref={ref}
-      className="flex-1 outline-none px-4"
+      className="flex-1 outline-none px-4 py-1"
       contentEditable
       onFocus={(e) => {
         placeCaretAtEnd(e.currentTarget);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === "Escape") {
+        if (e.key === "Escape") {
+          e.currentTarget.blur();
+          return;
+        }
+
+        if (e.shiftKey && e.key === "Enter") {
+          // TODO: create a new task, don't blur
           e.currentTarget.blur();
         }
+
         if (e.key === "Backspace") {
           let value = e.currentTarget.innerHTML.trim();
           if (value === "") {
@@ -291,6 +298,7 @@ function DayTask({ task, day }: { task: RenderedTask; day: string }) {
         />
         <input type="hidden" name="id" value={task.id} />
         <button
+          aria-label={complete ? "Mark incomplete" : "Mark complete"}
           style={{
             WebkitTapHighlightColor: "transparent",
           }}
@@ -501,8 +509,8 @@ function CalendarDay({
 
   // this is so gross right now.
   useLayoutEffect(() => {
-    if (isActive && ref.current) {
-      ref.current.scrollIntoView();
+    if (isActive) {
+      ref.current?.scrollIntoView();
     }
   }, []);
 

@@ -4,12 +4,11 @@ import { useFetcher, useFormAction } from "remix";
 
 import { ArrowButton, CheckIcon, RightArrowIcon } from "~/components/icons";
 import { Actions } from "~/actions/actions";
-import { ContentEditableField } from "~/components/forms";
+import { ContentEditableField, EditableList } from "~/components/editable-list";
 import {
   isNewTask,
   RenderedTask,
   TaskItem,
-  TaskList,
   TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
@@ -29,10 +28,10 @@ export function DayTaskList({
   return (
     <>
       <TaskListHeader>{formattedDate}</TaskListHeader>
-      <TaskList
-        tasks={tasks.concat(immigrants)}
-        renderTask={(task) => <DayTask key={task.id} task={task} day={day} />}
-        day={day}
+      <EditableList
+        label="New Task"
+        items={tasks.concat(immigrants)}
+        renderItem={(task) => <DayTask key={task.id} task={task} day={day} />}
       />
     </>
   );

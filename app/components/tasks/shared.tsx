@@ -1,14 +1,9 @@
-// @ts-expect-error
-import sortBy from "sort-by";
 import React from "react";
 import { Task } from "@prisma/client";
 import cuid from "cuid";
-import { Form, useFetchers } from "remix";
+import { useFetchers } from "remix";
 
-import { PlusIcon } from "~/components/icons";
-import { useLayoutEffect } from "~/components/layout-effect";
 import { Actions } from "~/actions/actions";
-import { AppButton } from "~/components/forms";
 
 export type NewTask = {
   id: string;
@@ -25,60 +20,6 @@ export function isNewTask(task: any): task is NewTask {
     typeof task.id === "string" &&
     typeof task.name === "string" &&
     task.isNew
-  );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-export function TaskList({
-  tasks,
-  renderTask,
-  day: date,
-}: {
-  tasks: Task[];
-  renderTask: (task: RenderedTask) => React.ReactNode;
-  day?: string;
-}) {
-  let [peNewId] = React.useState(() => cuid());
-  let [renderedTasks, addTask] = useOptimisticTasks(tasks);
-  let scrollRef = React.useRef<HTMLDivElement>(null);
-
-  // scroll to bottom of task list on mount, causes flicker on hydration
-  // sometimes but oh well
-  useLayoutEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, []);
-
-  return (
-    <div ref={scrollRef} className="flex-1 overflow-auto">
-      <div>
-        <div>
-          {renderedTasks
-            .slice(0)
-            .sort(sortBy("createdAt"))
-            .map((task) => renderTask(task))}
-        </div>
-        <div className="px-4 py-4 w-full">
-          {/* PE Form, not used when JS is loaded */}
-          <Form method="post" onSubmit={(e) => e.preventDefault()}>
-            <input type="hidden" name="_action" value={Actions.CREATE_TASK} />
-            <input type="hidden" name="id" value={peNewId} />
-            <input type="hidden" name="name" value="" />
-            {date && <input type="hidden" name="date" value={date} />}
-            <AppButton
-              type="submit"
-              onClick={(event) => {
-                addTask();
-                event.preventDefault();
-              }}
-            >
-              New Task <PlusIcon />
-            </AppButton>
-          </Form>
-        </div>
-      </div>
-    </div>
   );
 }
 

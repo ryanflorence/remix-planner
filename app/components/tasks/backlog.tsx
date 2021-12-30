@@ -1,14 +1,13 @@
 import { Task } from "@prisma/client";
 import { useFetcher, useFormAction } from "remix";
 
-import { ArrowButton, LeftArrowIcon } from "~/components/icons";
+import { ArrowButton, LeftArrowIcon, PlusIcon } from "~/components/icons";
 import { Actions } from "~/actions/actions";
-import { ContentEditableField } from "~/components/forms";
+import { ContentEditableField, EditableList } from "~/components/editable-list";
 import {
   isNewTask,
   RenderedTask,
   TaskItem,
-  TaskList,
   TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
@@ -24,9 +23,10 @@ export function BacklogTaskList({
   return (
     <>
       <TaskListHeader>Backlog</TaskListHeader>
-      <TaskList
-        tasks={backlog.concat(immigrants)}
-        renderTask={(task) => <BacklogTask key={task.id} task={task} />}
+      <EditableList
+        items={backlog.concat(immigrants)}
+        renderItem={(task) => <BacklogTask key={task.id} task={task} />}
+        label="New Task"
       />
     </>
   );

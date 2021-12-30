@@ -6,11 +6,10 @@ import {
   isNewTask,
   RenderedTask,
   TaskItem,
-  TaskList,
   TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
-import { ContentEditableField } from "../forms";
+import { ContentEditableField, EditableList } from "../editable-list";
 import { ArrowButton, LeftArrowIcon } from "../icons";
 
 export function UnassignedTaskList({
@@ -24,9 +23,10 @@ export function UnassignedTaskList({
   return (
     <>
       <TaskListHeader>Unassigned</TaskListHeader>
-      <TaskList
-        tasks={unassigned.concat(immigrants)}
-        renderTask={(task) => <UnassignedTask key={task.id} task={task} />}
+      <EditableList
+        label="New Task"
+        items={unassigned.concat(immigrants)}
+        renderItem={(task) => <UnassignedTask key={task.id} task={task} />}
       />
     </>
   );

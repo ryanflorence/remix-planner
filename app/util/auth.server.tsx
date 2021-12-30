@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import createMailgun from "mailgun-js";
 import type { ActionFunction, LoaderFunction, Session } from "remix";
 import { createCookieSessionStorage, json, redirect } from "remix";
-import { ensureUserAccount } from "./account.server";
+import { ensureUserAccount } from "./user.server";
 
 /*******************************************************************************
  * Before we can do anything, we need to make sure the environment has

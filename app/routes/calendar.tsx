@@ -1,6 +1,6 @@
 import { Outlet, redirect, json } from "remix";
 import type { LoaderFunction } from "remix";
-import { requireAuthSession } from "~/controllers/auth.server";
+import { requireAuthSession } from "~/util/auth.server";
 import { CalendarStats, getBacklog, getCalendarStats } from "~/models/task";
 import { format } from "date-fns";
 import { CACHE_CONTROL } from "~/util/http";

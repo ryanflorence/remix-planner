@@ -9,7 +9,6 @@ export default function handleRequest(
   remixContext: EntryContext
 ) {
   let markup = ReactDOMServer.renderToString(
-    // @ts-expect-error remix types got messed up
     <RemixServer context={remixContext} url={request.url} />
   );
 

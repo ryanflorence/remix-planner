@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "remix";
-import { requireAuthSession } from "~/controllers/auth.server";
+import { requireAuthSession } from "~/util/auth.server";
 
 export let loader: LoaderFunction = async ({ request }) => {
   await requireAuthSession(request);

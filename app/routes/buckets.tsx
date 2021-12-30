@@ -1,54 +1,101 @@
-import { Outlet, json, useLoaderData } from "remix";
+import { Outlet, json, useLoaderData, Form, ActionFunction } from "remix";
 import type { LoaderFunction } from "remix";
-import { requireUserId } from "~/controllers/auth.server";
-import { getBacklog } from "~/models/task";
-import { CACHE_CONTROL } from "~/util/http";
-import { Task } from "@prisma/client";
+import { requireAuthSession, requireUserId } from "~/util/auth.server";
+import { getUnassignedTasks } from "~/models/task";
+import { CACHE_CONTROL, parseStringFormData } from "~/util/http";
 import {
   HScrollChild,
   HScrollContent,
   SidebarLayout,
   SidebarNav,
 } from "~/components/layouts";
-import { BacklogTaskList } from "~/components/task";
+import { UnassignedTaskList } from "~/components/tasks/unassigned";
+import { AppButton, TextInput } from "~/components/forms";
+import { PlusIcon } from "~/components/icons";
+import * as Bucket from "~/models/bucket";
+import { Actions } from "~/actions/actions";
+import invariant from "tiny-invariant";
 
-export type CalendarLoaderData = {
-  backlog: Task[];
+type BucketsLoaderData = {
+  unassigned: Awaited<ReturnType<typeof getUnassignedTasks>>;
+  buckets: Awaited<ReturnType<typeof Bucket.getBuckets>>;
 };
-
-type Backlog = Awaited<ReturnType<typeof getBacklog>>;
 
 export let loader: LoaderFunction = async ({ request }) => {
   let userId = await requireUserId(request);
-  let backlog = await getBacklog(userId);
-  return json<{ backlog: Backlog }>(
-    { backlog },
+  let [unassigned, buckets] = await Promise.all([
+    getUnassignedTasks(userId),
+    Bucket.getBuckets(userId),
+  ]);
+  return json<BucketsLoaderData>(
+    { unassigned, buckets },
     {
       headers: { "Cache-Control": CACHE_CONTROL.none },
     }
   );
 };
 
+export let action: ActionFunction = async ({ request }) => {
+  let session = await requireAuthSession(request);
+  let userId = session.get("userId");
+
+  let data = await parseStringFormData(request);
+
+  switch (data._action) {
+    case Actions.CREATE_BUCKET: {
+      invariant(data.name, "expected data.name");
+      return Bucket.createBucket(userId, data.name);
+    }
+    default: {
+      throw new Response("Bad Request", { status: 400 });
+    }
+  }
+};
+
 export default function Buckets() {
-  let { backlog } = useLoaderData<{ backlog: Backlog }>();
+  let { unassigned, buckets } = useLoaderData<BucketsLoaderData>();
 
   return (
     <SidebarLayout>
       <SidebarNav>
-        <div className="p-4 w-[33vw]">Buckets</div>
+        <BucketList buckets={buckets} />
       </SidebarNav>
       <HScrollContent>
         <HScrollChild>
           <Outlet />
         </HScrollChild>
         <HScrollChild>
-          <BacklogTaskList
-            // FIXME: should be the bucket's tasks
-            tasks={[]}
-            backlog={backlog}
-          />
+          <UnassignedTaskList tasks={[]} unassigned={unassigned} />
         </HScrollChild>
       </HScrollContent>
     </SidebarLayout>
+  );
+}
+
+function BucketList({ buckets }: { buckets: BucketsLoaderData["buckets"] }) {
+  return (
+    <div className="xl:w-[33vw]">
+      <div>
+        {buckets.map((bucket) => (
+          <div key={bucket.id}>{bucket.name}</div>
+        ))}
+      </div>
+
+      <NewBucketForm />
+    </div>
+  );
+}
+
+function NewBucketForm() {
+  return (
+    <div className="px-4 py-4 w-full">
+      <Form method="post" className="flex gap-2">
+        <input type="hidden" name="_action" value={Actions.CREATE_BUCKET} />
+        <TextInput name="name" required className="w-1/2" />
+        <AppButton type="submit" className="w-1/2">
+          Create Bucket <PlusIcon />
+        </AppButton>
+      </Form>
+    </div>
   );
 }

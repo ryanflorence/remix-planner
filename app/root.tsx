@@ -9,7 +9,7 @@ import {
 } from "remix";
 import type { LoaderFunction } from "remix";
 import ringStyles from "react-circular-progressbar/dist/styles.css";
-import { getAuthSession } from "~/controllers/auth.server";
+import { getAuthSession } from "~/util/auth.server";
 import styles from "~/tailwind.css";
 import { ArchiveIcon, CalendarIcon, LogoutIcon } from "./components/icons";
 

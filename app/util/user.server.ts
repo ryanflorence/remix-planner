@@ -14,9 +14,9 @@ export async function requireUser(email: string) {
 export async function ensureUserAccount(email: string) {
   let user = await db.user.findUnique({ where: { email } });
 
-  if (user) return user;
+  if (user) {
+    return user;
+  }
 
-  return db.user.create({
-    data: { email },
-  });
+  return db.user.create({ data: { email } });
 }

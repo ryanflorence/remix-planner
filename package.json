@@ -26,6 +26,7 @@
     "react-circular-progressbar": "^2.0.4",
     "react-dom": "^17.0.1",
     "remix": "1.1.1",
+    "slugify": "^1.6.4",
     "sort-by": "^1.2.0",
     "tailwindcss-neumorphism": "^0.1.0",
     "tiny-invariant": "^1.2.0"

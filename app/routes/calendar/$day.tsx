@@ -4,8 +4,8 @@ import type { CalendarLoaderData } from "../calendar";
 import { useLoaderData, useParams, json } from "remix";
 import invariant from "tiny-invariant";
 
-import { handleTaskAction } from "~/controllers/task.server";
-import { requireUserId } from "~/controllers/auth.server";
+import { handleTaskAction } from "~/actions/actions.server";
+import { requireUserId } from "~/util/auth.server";
 import * as Task from "~/models/task";
 import { CACHE_CONTROL } from "~/util/http";
 
@@ -16,7 +16,9 @@ import {
   SidebarLayout,
   SidebarNav,
 } from "~/components/layouts";
-import { DayTaskList, BacklogTaskList, Calendar } from "~/components/task";
+import { DayTaskList } from "~/components/tasks/day";
+import { BacklogTaskList } from "~/components/tasks/backlog";
+import { Calendar } from "~/components/tasks/calendar";
 
 ////////////////////////////////////////////////////////////////////////////////
 type DayTasks = Awaited<ReturnType<typeof Task.getDayTasks>>;

@@ -2,14 +2,11 @@ import { db } from "~/models/db.server";
 import invariant from "tiny-invariant";
 import { formatParamDate } from "~/util/date";
 
-export enum Actions {
-  CREATE_TASK = "CREATE_TASK",
-  UPDATE_TASK_NAME = "UPDATE_TASK_NAME",
-  MOVE_TASK_TO_DAY = "MOVE_TASK_TO_DAY",
-  MOVE_TASK_TO_BACKLOG = "MOVE_TASK_TO_BACKLOG",
-  MARK_COMPLETE = "MARK_COMPLETE",
-  MARK_INCOMPLETE = "MARK_INCOMPLETE",
-  DELETE_TASK = "DELETE_TASK",
+export function getUnassignedTasks(userId: string) {
+  return db.task.findMany({
+    where: { userId, bucketId: null },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
 export function getBacklog(userId: string) {
@@ -122,9 +119,10 @@ export function markComplete(id: string) {
 export function createOrUpdateTask(
   userId: string,
   id: string,
-  name: string,
+  name?: string,
   date?: string
 ) {
+  name ||= "";
   return db.task.upsert({
     where: { id },
     create: { name, id, userId, date },

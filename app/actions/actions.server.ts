@@ -2,10 +2,10 @@ import type { ActionFunction } from "remix";
 
 import invariant from "tiny-invariant";
 
-import { requireAuthSession } from "./auth.server";
-import { Actions } from "~/models/task";
+import { requireAuthSession } from "../util/auth.server";
 import * as Task from "~/models/task";
 import { parseStringFormData } from "~/util/http";
+import { Actions } from "./actions";
 
 export let handleTaskAction: ActionFunction = async ({ request, params }) => {
   let session = await requireAuthSession(request);
@@ -16,7 +16,8 @@ export let handleTaskAction: ActionFunction = async ({ request, params }) => {
   switch (data._action) {
     case Actions.CREATE_TASK:
     case Actions.UPDATE_TASK_NAME: {
-      invariant(data.id && data.name, "expected id and name");
+      console.log(data);
+      invariant(data.id, "expected id");
       return Task.createOrUpdateTask(userId, data.id, data.name, data.date);
     }
 

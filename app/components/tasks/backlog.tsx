@@ -45,6 +45,9 @@ function BacklogTask({ task }: { task: RenderedTask }) {
   let deleting =
     fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
 
+  // FIXME: fix the types here
+  let bucketName = (task as any).Bucket?.name as string | undefined;
+
   return (
     <EditableItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
@@ -76,10 +79,12 @@ function BacklogTask({ task }: { task: RenderedTask }) {
           );
         }}
       />
-      <div className="text-xs self-center text-gray-500 mr-2 px-1 flex items-center">
-        {/*FIXME:*/ (task as any).Bucket.name}
-        <Dot str={(task as any).Bucket.name} />
-      </div>
+      {bucketName && (
+        <div className="text-xs self-center text-gray-500 mr-2 px-1 flex items-center">
+          {bucketName}
+          <Dot str={bucketName} />
+        </div>
+      )}
     </EditableItem>
   );
 }

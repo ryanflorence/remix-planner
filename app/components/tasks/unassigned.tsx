@@ -17,9 +17,11 @@ import { ArrowButton, LeftArrowIcon } from "../icons";
 
 export function UnassignedTaskList({
   tasks,
+  bucketId,
   unassigned,
 }: {
   tasks: Task[];
+  bucketId: string;
   unassigned: Task[];
 }) {
   let immigrants = useImmigrants(Actions.UNASSIGN_TASK, tasks);
@@ -29,7 +31,9 @@ export function UnassignedTaskList({
       <EditableList
         label="New Task"
         items={unassigned.concat(immigrants)}
-        renderItem={(task) => <UnassignedTask key={task.id} task={task} />}
+        renderItem={(task) => (
+          <UnassignedTask key={task.id} task={task} bucketId={bucketId} />
+        )}
       />
     </>
   );
@@ -38,11 +42,17 @@ export function UnassignedTaskList({
 /**
  *  TODO: This is just copy/pasta from BacklogTask, needs it's own stuff
  */
-function UnassignedTask({ task }: { task: RenderedTask }) {
+function UnassignedTask({
+  task,
+  bucketId,
+}: {
+  task: RenderedTask;
+  bucketId: string;
+}) {
   let action = useFormAction();
   let fetcher = useFetcher();
   let moving =
-    fetcher.submission?.formData.get("_action") === Actions.MOVE_TASK_TO_DAY;
+    fetcher.submission?.formData.get("_action") === Actions.MOVE_TASK_TO_BUCKET;
 
   let deleting =
     fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
@@ -50,8 +60,13 @@ function UnassignedTask({ task }: { task: RenderedTask }) {
   return (
     <EditableItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
-        <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
+        <input
+          type="hidden"
+          name="_action"
+          value={Actions.MOVE_TASK_TO_BUCKET}
+        />
         <input type="hidden" name="id" value={task.id} />
+        <input type="hidden" name="bucketId" value={bucketId} />
         <ArrowButton>
           <LeftArrowIcon />
         </ArrowButton>

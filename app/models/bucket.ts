@@ -1,6 +1,13 @@
 import { db } from "~/models/db.server";
 import slugify from "slugify";
 
+export async function getBucketWithTasksBySlug(userId: string, slug: string) {
+  return db.bucket.findFirst({
+    where: { userId, slug },
+    include: { tasks: true },
+  });
+}
+
 export async function getBucket(id: string) {
   return db.bucket.findFirst({ where: { id } });
 }

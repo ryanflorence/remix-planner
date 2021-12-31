@@ -19,9 +19,9 @@ export let handleTaskAction: ActionFunction = async ({ request, params }) => {
   switch (data._action) {
     case Actions.CREATE_TASK:
     case Actions.UPDATE_TASK_NAME: {
-      console.log(data);
       invariant(data.id, "expected id");
-      return Task.createOrUpdateTask(userId, data.id, data.name, data.date);
+      let { date, name, bucketId } = data;
+      return Task.createOrUpdateTask(userId, data.id, { date, name, bucketId });
     }
 
     case Actions.MARK_COMPLETE: {
@@ -42,6 +42,16 @@ export let handleTaskAction: ActionFunction = async ({ request, params }) => {
     case Actions.MOVE_TASK_TO_BACKLOG: {
       invariant(data.id, "expected taskId");
       return Task.removeDate(data.id);
+    }
+
+    case Actions.UNASSIGN_TASK: {
+      invariant(data.id, "expected taskId");
+      return Task.unassignTask(data.id);
+    }
+
+    case Actions.MOVE_TASK_TO_BUCKET: {
+      invariant(data.id && data.bucketId, "expected taskId, bucketId");
+      return Task.assignTask(data.id, data.bucketId);
     }
 
     case Actions.DELETE_TASK: {

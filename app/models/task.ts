@@ -1,6 +1,14 @@
 import { db } from "~/models/db.server";
 import invariant from "tiny-invariant";
 import { formatParamDate } from "~/util/date";
+import { Task } from "@prisma/client";
+
+export function getBucketTasks(userId: string, slug: string) {
+  return db.bucket.findMany({
+    where: { userId, slug },
+    orderBy: { createdAt: "asc" },
+  });
+}
 
 export function getUnassignedTasks(userId: string) {
   return db.task.findMany({
@@ -119,14 +127,13 @@ export function markComplete(id: string) {
 export function createOrUpdateTask(
   userId: string,
   id: string,
-  name?: string,
-  date?: string
+  data: Partial<Task>
 ) {
-  name ||= "";
+  let name = data.name || "";
   return db.task.upsert({
     where: { id },
-    create: { name, id, userId, date },
-    update: { name, id },
+    create: { userId, ...data, id, name },
+    update: { ...data, id, name },
   });
 }
 
@@ -148,6 +155,20 @@ export function removeDate(id: string) {
   return db.task.update({
     where: { id },
     data: { date: null },
+  });
+}
+
+export function unassignTask(id: string) {
+  return db.task.update({
+    where: { id },
+    data: { bucketId: null },
+  });
+}
+
+export function assignTask(id: string, bucketId: string) {
+  return db.task.update({
+    where: { id },
+    data: { bucketId },
   });
 }
 

@@ -106,16 +106,12 @@ export function ContentEditableField({
   onCreate,
   onChange,
   onDelete,
-  onBlur,
-  autoSelect = false,
 }: {
   value: string;
   isNew: boolean;
   onCreate: () => void;
   onChange: (value: string) => void;
   onDelete: () => void;
-  onBlur?: (event: React.FocusEvent<HTMLDivElement>) => void;
-  autoSelect?: boolean;
 }) {
   // uncontrolled contenteditable, so don't ever take an update from the server
   let [initialValue] = React.useState(value);
@@ -127,17 +123,11 @@ export function ContentEditableField({
   // a user interactions" so that the keyboard opens up to start editing
   useLayoutEffect(() => {
     if (isNew && ref.current) {
-      ref.current.focus();
       onCreate();
-    }
-  }, [isNew]);
-
-  useLayoutEffect(() => {
-    if (autoSelect && ref.current) {
-      selectAll(ref.current);
+      ref.current.focus();
       ref.current?.scrollIntoView();
     }
-  }, [autoSelect]);
+  }, [isNew]);
 
   return (
     <div
@@ -166,11 +156,6 @@ export function ContentEditableField({
         }
       }}
       onBlur={(e) => {
-        onBlur?.(e);
-        if (e.defaultPrevented) {
-          return;
-        }
-
         let newValue = e.currentTarget.innerHTML.trim();
         if (newValue !== value) {
           onChange(newValue);

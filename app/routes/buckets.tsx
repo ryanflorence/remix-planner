@@ -2,17 +2,17 @@ import {
   Outlet,
   json,
   useLoaderData,
-  ActionFunction,
   useFetcher,
   useLocation,
   useFormAction,
   NavLink,
   useParams,
+  useMatches,
 } from "remix";
 import type { LoaderFunction } from "remix";
-import { requireAuthSession, requireUserId } from "~/util/auth.server";
+import { requireUserId } from "~/util/auth.server";
 import { getUnassignedTasks } from "~/models/task";
-import { CACHE_CONTROL, parseStringFormData } from "~/util/http";
+import { CACHE_CONTROL } from "~/util/http";
 import {
   HScrollChild,
   HScrollContent,
@@ -22,15 +22,13 @@ import {
 import { UnassignedTaskList } from "~/components/tasks/unassigned";
 import * as BucketModel from "~/models/bucket";
 import { Actions } from "~/actions/actions";
-import invariant from "tiny-invariant";
 import {
   ContentEditableField,
   EditableItem,
   EditableList,
   Header,
 } from "~/components/editable-list";
-import { Bucket } from "@prisma/client";
-import React from "react";
+import { Bucket, Task } from "@prisma/client";
 
 // FIXME: https://github.com/remix-run/remix/issues/1291
 export { handleTaskAction as action } from "~/actions/actions.server";
@@ -57,6 +55,11 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default function Buckets() {
   let { unassigned, buckets } = useLoaderData<BucketsLoaderData>();
 
+  // FIXME: Gonna move this rendering over to the bucketSlug like tasks/$day
+  let bucket = useMatches().slice(-1)[0].data;
+  let tasks = bucket.tasks as unknown as Task[];
+  let bucketId = bucket.id;
+
   return (
     <SidebarLayout>
       <SidebarNav>
@@ -67,7 +70,11 @@ export default function Buckets() {
           <Outlet />
         </HScrollChild>
         <HScrollChild>
-          {/* <UnassignedTaskList tasks={[]} unassigned={unassigned} /> */}
+          <UnassignedTaskList
+            tasks={tasks}
+            unassigned={unassigned}
+            bucketId={bucketId}
+          />
         </HScrollChild>
       </HScrollContent>
     </SidebarLayout>
@@ -117,7 +124,6 @@ function BucketItem({ bucket: bucket }: { bucket: RenderedBucket }) {
     >
       <EditableItem key={bucket.id} hide={deleting}>
         <ContentEditableField
-          autoSelect
           value={bucket.name}
           isNew={isNewBucket(bucket)}
           onCreate={() => {
@@ -135,7 +141,7 @@ function BucketItem({ bucket: bucket }: { bucket: RenderedBucket }) {
               {
                 _action: Actions.UPDATE_BUCKET_NAME,
                 id: bucket.id,
-                slug: params.bucketId || "",
+                slug: params.bucketSlug || "",
                 name: value.trim(),
               },
               { method: "post", action }
@@ -156,15 +162,4 @@ function BucketItem({ bucket: bucket }: { bucket: RenderedBucket }) {
 // TODO: make generic with isNewTask
 export function isNewBucket(bucket: any): bucket is NewBucket {
   return bucket && typeof bucket.id === "string" && bucket.isNew;
-}
-
-function useFetcherComplete(state: string, onComplete: () => void) {
-  let ref = React.useRef<string>(state);
-  React.useEffect(() => {
-    console.log(state, ref.current);
-    if (state === "idle" && ref.current === "submitting") {
-      onComplete();
-    }
-    ref.current = state;
-  });
 }

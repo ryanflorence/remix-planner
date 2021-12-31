@@ -1,9 +1,12 @@
-import type { ActionFunction } from "remix";
+import { ActionFunction, redirect } from "remix";
 
 import invariant from "tiny-invariant";
 
 import { requireAuthSession } from "../util/auth.server";
+
 import * as Task from "~/models/task";
+import * as Bucket from "~/models/bucket";
+
 import { parseStringFormData } from "~/util/http";
 import { Actions } from "./actions";
 
@@ -46,8 +49,30 @@ export let handleTaskAction: ActionFunction = async ({ request, params }) => {
       return Task.deleteTask(data.id);
     }
 
+    case Actions.CREATE_BUCKET: {
+      invariant(data.id, "expected bucket id");
+      return Bucket.createBucket(userId, data.id, data.name);
+    }
+
+    case Actions.DELETE_BUCKET: {
+      invariant(data.id, "expected bucket id");
+      return Bucket.deleteBucket(data.id);
+    }
+
+    case Actions.UPDATE_BUCKET_NAME: {
+      invariant(
+        data.id && data.name && data.slug,
+        "expected bucket id, slug, name"
+      );
+      let bucket = await Bucket.getBucket(data.id);
+      invariant(bucket, `expected bucket with id ${data.id}`);
+      let bucketIsActivePage = data.slug === bucket.slug;
+      bucket = await Bucket.updateBucketName(data.id, data.name);
+      return bucketIsActivePage ? redirect(`/buckets/${bucket.slug}`) : bucket;
+    }
+
     default: {
-      throw new Response("Bad Request", { status: 400 });
+      throw new Response(`Unknown action ${data._action}`, { status: 400 });
     }
   }
 };

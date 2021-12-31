@@ -3,12 +3,15 @@ import { useFetcher, useFormAction } from "remix";
 
 import { ArrowButton, LeftArrowIcon, PlusIcon } from "~/components/icons";
 import { Actions } from "~/actions/actions";
-import { ContentEditableField, EditableList } from "~/components/editable-list";
+import {
+  ContentEditableField,
+  EditableItem,
+  EditableList,
+  Header,
+} from "~/components/editable-list";
 import {
   isNewTask,
   RenderedTask,
-  TaskItem,
-  TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
 
@@ -22,7 +25,7 @@ export function BacklogTaskList({
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_BACKLOG, tasks);
   return (
     <>
-      <TaskListHeader>Backlog</TaskListHeader>
+      <Header>Backlog</Header>
       <EditableList
         items={backlog.concat(immigrants)}
         renderItem={(task) => <BacklogTask key={task.id} task={task} />}
@@ -42,7 +45,7 @@ function BacklogTask({ task }: { task: RenderedTask }) {
     fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
 
   return (
-    <TaskItem key={task.id} hide={moving || deleting}>
+    <EditableItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
         <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
         <input type="hidden" name="id" value={task.id} />
@@ -72,6 +75,6 @@ function BacklogTask({ task }: { task: RenderedTask }) {
           );
         }}
       />
-    </TaskItem>
+    </EditableItem>
   );
 }

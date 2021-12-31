@@ -4,12 +4,15 @@ import { useFetcher, useFormAction } from "remix";
 
 import { ArrowButton, CheckIcon, RightArrowIcon } from "~/components/icons";
 import { Actions } from "~/actions/actions";
-import { ContentEditableField, EditableList } from "~/components/editable-list";
+import {
+  ContentEditableField,
+  EditableItem,
+  EditableList,
+  Header,
+} from "~/components/editable-list";
 import {
   isNewTask,
   RenderedTask,
-  TaskItem,
-  TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
 import { parseParamDate } from "~/util/date";
@@ -27,7 +30,7 @@ export function DayTaskList({
   let immigrants = useImmigrants(Actions.MOVE_TASK_TO_DAY, backlog);
   return (
     <>
-      <TaskListHeader>{formattedDate}</TaskListHeader>
+      <Header>{formattedDate}</Header>
       <EditableList
         label="New Task"
         items={tasks.concat(immigrants)}
@@ -60,7 +63,7 @@ function DayTask({ task, day }: { task: RenderedTask; day: string }) {
     fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
 
   return (
-    <TaskItem key={task.id} hide={moving || deleting}>
+    <EditableItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
         <input
           type="hidden"
@@ -120,6 +123,6 @@ function DayTask({ task, day }: { task: RenderedTask; day: string }) {
           <RightArrowIcon />
         </ArrowButton>
       </fetcher.Form>
-    </TaskItem>
+    </EditableItem>
   );
 }

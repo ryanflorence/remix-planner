@@ -1,4 +1,14 @@
-import { Outlet, json, useLoaderData, Form, ActionFunction } from "remix";
+import {
+  Outlet,
+  json,
+  useLoaderData,
+  ActionFunction,
+  useFetcher,
+  useLocation,
+  useFormAction,
+  NavLink,
+  useParams,
+} from "remix";
 import type { LoaderFunction } from "remix";
 import { requireAuthSession, requireUserId } from "~/util/auth.server";
 import { getUnassignedTasks } from "~/models/task";
@@ -10,22 +20,31 @@ import {
   SidebarNav,
 } from "~/components/layouts";
 import { UnassignedTaskList } from "~/components/tasks/unassigned";
-import { AppButton, TextInput } from "~/components/forms";
-import { PlusIcon } from "~/components/icons";
-import * as Bucket from "~/models/bucket";
+import * as BucketModel from "~/models/bucket";
 import { Actions } from "~/actions/actions";
 import invariant from "tiny-invariant";
+import {
+  ContentEditableField,
+  EditableItem,
+  EditableList,
+  Header,
+} from "~/components/editable-list";
+import { Bucket } from "@prisma/client";
+import React from "react";
+
+// FIXME: https://github.com/remix-run/remix/issues/1291
+export { handleTaskAction as action } from "~/actions/actions.server";
 
 type BucketsLoaderData = {
   unassigned: Awaited<ReturnType<typeof getUnassignedTasks>>;
-  buckets: Awaited<ReturnType<typeof Bucket.getBuckets>>;
+  buckets: Awaited<ReturnType<typeof BucketModel.getBuckets>>;
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
   let userId = await requireUserId(request);
   let [unassigned, buckets] = await Promise.all([
     getUnassignedTasks(userId),
-    Bucket.getBuckets(userId),
+    BucketModel.getBuckets(userId),
   ]);
   return json<BucketsLoaderData>(
     { unassigned, buckets },
@@ -33,23 +52,6 @@ export let loader: LoaderFunction = async ({ request }) => {
       headers: { "Cache-Control": CACHE_CONTROL.none },
     }
   );
-};
-
-export let action: ActionFunction = async ({ request }) => {
-  let session = await requireAuthSession(request);
-  let userId = session.get("userId");
-
-  let data = await parseStringFormData(request);
-
-  switch (data._action) {
-    case Actions.CREATE_BUCKET: {
-      invariant(data.name, "expected data.name");
-      return Bucket.createBucket(userId, data.name);
-    }
-    default: {
-      throw new Response("Bad Request", { status: 400 });
-    }
-  }
 };
 
 export default function Buckets() {
@@ -65,7 +67,7 @@ export default function Buckets() {
           <Outlet />
         </HScrollChild>
         <HScrollChild>
-          <UnassignedTaskList tasks={[]} unassigned={unassigned} />
+          {/* <UnassignedTaskList tasks={[]} unassigned={unassigned} /> */}
         </HScrollChild>
       </HScrollContent>
     </SidebarLayout>
@@ -75,27 +77,94 @@ export default function Buckets() {
 function BucketList({ buckets }: { buckets: BucketsLoaderData["buckets"] }) {
   return (
     <div className="xl:w-[33vw]">
-      <div>
-        {buckets.map((bucket) => (
-          <div key={bucket.id}>{bucket.name}</div>
-        ))}
-      </div>
-
-      <NewBucketForm />
+      <Header>Buckets (WIP)</Header>
+      <EditableList
+        items={buckets}
+        label="New Bucket"
+        renderItem={(bucket) => <BucketItem key={bucket.id} bucket={bucket} />}
+      />
     </div>
   );
 }
 
-function NewBucketForm() {
+export type NewBucket = {
+  id: string;
+  name: string;
+  isNew?: boolean;
+};
+
+export type RenderedBucket = Bucket | NewBucket;
+
+function BucketItem({ bucket: bucket }: { bucket: RenderedBucket }) {
+  let params = useParams();
+  let fetcher = useFetcher();
+  let action = useFormAction();
+  let location = useLocation();
+
+  let deleting =
+    fetcher.submission?.formData.get("_action") === Actions.DELETE_BUCKET;
+
   return (
-    <div className="px-4 py-4 w-full">
-      <Form method="post" className="flex gap-2">
-        <input type="hidden" name="_action" value={Actions.CREATE_BUCKET} />
-        <TextInput name="name" required className="w-1/2" />
-        <AppButton type="submit" className="w-1/2">
-          Create Bucket <PlusIcon />
-        </AppButton>
-      </Form>
-    </div>
+    <NavLink
+      to={(bucket as Bucket).slug || location}
+      className={({ isActive }) =>
+        // TODO: these styles are dumb because the abstractions in the wrong
+        // place need to move the styles out of EditableField, actually
+        // starting to think it's silly to be re-using this list for the
+        // projects, it's not as similar as I was anticipating!
+        "w-full" + " " + (isActive ? "bg-pink-500 text-white" : "")
+      }
+    >
+      <EditableItem key={bucket.id} hide={deleting}>
+        <ContentEditableField
+          autoSelect
+          value={bucket.name}
+          isNew={isNewBucket(bucket)}
+          onCreate={() => {
+            fetcher.submit(
+              {
+                _action: Actions.CREATE_BUCKET,
+                id: bucket.id,
+                name: "",
+              },
+              { method: "post", action }
+            );
+          }}
+          onChange={(value) => {
+            fetcher.submit(
+              {
+                _action: Actions.UPDATE_BUCKET_NAME,
+                id: bucket.id,
+                slug: params.bucketId || "",
+                name: value.trim(),
+              },
+              { method: "post", action }
+            );
+          }}
+          onDelete={() => {
+            fetcher.submit(
+              { _action: Actions.DELETE_BUCKET, id: bucket.id },
+              { method: "post", action }
+            );
+          }}
+        />
+      </EditableItem>
+    </NavLink>
   );
+}
+
+// TODO: make generic with isNewTask
+export function isNewBucket(bucket: any): bucket is NewBucket {
+  return bucket && typeof bucket.id === "string" && bucket.isNew;
+}
+
+function useFetcherComplete(state: string, onComplete: () => void) {
+  let ref = React.useRef<string>(state);
+  React.useEffect(() => {
+    console.log(state, ref.current);
+    if (state === "idle" && ref.current === "submitting") {
+      onComplete();
+    }
+    ref.current = state;
+  });
 }

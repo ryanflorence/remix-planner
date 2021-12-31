@@ -105,6 +105,10 @@ export async function getAuthSession(
  * can log them into the right page later.
  */
 export let loginLoader: LoaderFunction = async ({ request }) => {
+  let userId = await getSessionUserId(request);
+  if (userId) {
+    return redirect("/");
+  }
   return json({ landingPage: getReferrer(request) });
 };
 
@@ -346,4 +350,9 @@ export async function requireUserId(request: Request) {
   let userId = session.get("userId");
   if (typeof userId !== "string") throw redirect("/login");
   return userId;
+}
+
+export async function getSessionUserId(request: Request) {
+  let session = await getAuthSession(request);
+  return session?.get("userId") || null;
 }

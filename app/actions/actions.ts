@@ -1,3 +1,7 @@
+// TODO: nahh ... I don't like this, gonna move the actions to the specific
+// routes that handle them so illustrate how you might scale a very large app in
+// Remix, this huge list of actions (and the huge function that handles them
+// all) wouldn't scale as well as each route owning it's actions.
 export enum Actions {
   CREATE_TASK = "CREATE_TASK",
   UPDATE_TASK_NAME = "UPDATE_TASK_NAME",
@@ -9,4 +13,5 @@ export enum Actions {
   UNASSIGN_TASK = "UNASSIGN_TASK",
   CREATE_BUCKET = "CREATE_BUCKET",
   DELETE_BUCKET = "DELETE_BUCKET",
+  UPDATE_BUCKET_NAME = "UPDATE_BUCKET_NAME",
 }

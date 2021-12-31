@@ -5,11 +5,14 @@ import { Actions } from "~/actions/actions";
 import {
   isNewTask,
   RenderedTask,
-  TaskItem,
-  TaskListHeader,
   useImmigrants,
 } from "~/components/tasks/shared";
-import { ContentEditableField, EditableList } from "../editable-list";
+import {
+  ContentEditableField,
+  EditableItem,
+  EditableList,
+  Header,
+} from "../editable-list";
 import { ArrowButton, LeftArrowIcon } from "../icons";
 
 export function UnassignedTaskList({
@@ -22,7 +25,7 @@ export function UnassignedTaskList({
   let immigrants = useImmigrants(Actions.UNASSIGN_TASK, tasks);
   return (
     <>
-      <TaskListHeader>Unassigned</TaskListHeader>
+      <Header>Unassigned</Header>
       <EditableList
         label="New Task"
         items={unassigned.concat(immigrants)}
@@ -45,7 +48,7 @@ function UnassignedTask({ task }: { task: RenderedTask }) {
     fetcher.submission?.formData.get("_action") === Actions.DELETE_TASK;
 
   return (
-    <TaskItem key={task.id} hide={moving || deleting}>
+    <EditableItem key={task.id} hide={moving || deleting}>
       <fetcher.Form method="post">
         <input type="hidden" name="_action" value={Actions.MOVE_TASK_TO_DAY} />
         <input type="hidden" name="id" value={task.id} />
@@ -75,6 +78,6 @@ function UnassignedTask({ task }: { task: RenderedTask }) {
           );
         }}
       />
-    </TaskItem>
+    </EditableItem>
   );
 }

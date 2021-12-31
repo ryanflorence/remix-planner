@@ -1,15 +1,17 @@
 import { LoaderFunction, redirect } from "remix";
 import { requireUserId } from "~/util/auth.server";
-import { getRecentBucket } from "~/models/bucket";
+import { createBucket, getRecentBucket } from "~/models/bucket";
+
+// FIXME: https://github.com/remix-run/remix/issues/1291
+export { handleTaskAction as action } from "~/actions/actions.server";
 
 export let loader: LoaderFunction = async ({ request }) => {
   let userId = await requireUserId(request);
   let latest = await getRecentBucket(userId);
   if (latest) {
     return redirect(`/buckets/${latest.slug}`);
+  } else {
+    let bucket = await createBucket(userId, "Family");
+    return redirect(`/buckets/${bucket.slug}`);
   }
 };
-
-export default function Index() {
-  return <div className="p-4">← Create a bucket</div>;
-}

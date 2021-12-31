@@ -106,12 +106,16 @@ export function ContentEditableField({
   onCreate,
   onChange,
   onDelete,
+  onBlur,
+  autoSelect = false,
 }: {
   value: string;
   isNew: boolean;
   onCreate: () => void;
   onChange: (value: string) => void;
   onDelete: () => void;
+  onBlur?: (event: React.FocusEvent<HTMLDivElement>) => void;
+  autoSelect?: boolean;
 }) {
   // uncontrolled contenteditable, so don't ever take an update from the server
   let [initialValue] = React.useState(value);
@@ -122,13 +126,18 @@ export function ContentEditableField({
   // effect so it's in the same tick of the event and therefore "in response to
   // a user interactions" so that the keyboard opens up to start editing
   useLayoutEffect(() => {
-    if (isNew) {
-      ref.current?.focus();
-      // scroll iOS all the way
-      ref.current?.scrollIntoView();
+    if (isNew && ref.current) {
+      ref.current.focus();
       onCreate();
     }
   }, [isNew]);
+
+  useLayoutEffect(() => {
+    if (autoSelect && ref.current) {
+      selectAll(ref.current);
+      ref.current?.scrollIntoView();
+    }
+  }, [autoSelect]);
 
   return (
     <div
@@ -157,6 +166,11 @@ export function ContentEditableField({
         }
       }}
       onBlur={(e) => {
+        onBlur?.(e);
+        if (e.defaultPrevented) {
+          return;
+        }
+
         let newValue = e.currentTarget.innerHTML.trim();
         if (newValue !== value) {
           onChange(newValue);
@@ -176,4 +190,39 @@ function placeCaretAtEnd(node: HTMLElement) {
     sel.removeAllRanges();
     sel.addRange(range);
   }
+}
+
+function selectAll(node: HTMLElement) {
+  let range = document.createRange();
+  range.selectNodeContents(node);
+  let sel = window.getSelection();
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+export function Header({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="bg-gray-100 border-b text-center p-4 font-bold uppercase text-sm text-black"
+      children={children}
+    />
+  );
+}
+
+export function EditableItem({
+  children,
+  hide,
+}: {
+  children: React.ReactNode;
+  // TODO: bringin in an animation library, needs to wrap the whole list to
+  // persist them for the animation
+  hide?: boolean;
+}) {
+  return hide ? null : (
+    <div className="flex items-start border-t last:border-b border-gray-100 text-gray-700 bg-gray-50 focus-within:bg-white py-2 px-4">
+      {children}
+    </div>
+  );
 }

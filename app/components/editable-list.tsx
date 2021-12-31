@@ -1,5 +1,3 @@
-// @ts-expect-error
-import sortBy from "sort-by";
 import cuid from "cuid";
 import React from "react";
 import { useLayoutEffect } from "./layout-effect";
@@ -78,12 +76,7 @@ export function EditableList<T extends EditableRecord>({
   return (
     <div ref={scrollRef} className="flex-1 overflow-auto">
       <div>
-        <div>
-          {renderedRecords
-            .slice(0)
-            .sort(sortBy("createdAt"))
-            .map((item) => renderItem(item))}
-        </div>
+        <div>{renderedRecords.map((item) => renderItem(item))}</div>
         <div className="px-4 py-4 w-full">
           <AppButton
             type="button"

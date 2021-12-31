@@ -1,3 +1,5 @@
+// @ts-expect-error
+import sortBy from "sort-by";
 import { Task } from "@prisma/client";
 import { useFetcher, useFormAction } from "remix";
 
@@ -32,7 +34,9 @@ export function BucketTaskList({
       <Header>{bucketName}</Header>
       <EditableList
         label="New Task"
-        items={tasks.concat(immigrants)}
+        items={tasks
+          .concat(immigrants)
+          .sort(sortBy("Bucket.name", "createdAt"))}
         renderItem={(task) => (
           <BucketTask key={task.id} task={task} bucketId={bucketId} />
         )}

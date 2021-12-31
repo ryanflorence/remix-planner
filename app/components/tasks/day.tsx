@@ -1,3 +1,5 @@
+// @ts-expect-error
+import sortBy from "sort-by";
 import { format } from "date-fns";
 import { Task } from "@prisma/client";
 import { useFetcher, useFormAction } from "remix";
@@ -34,7 +36,9 @@ export function DayTaskList({
       <Header>{formattedDate}</Header>
       <EditableList
         label="New Task"
-        items={tasks.concat(immigrants)}
+        items={tasks
+          .concat(immigrants)
+          .sort(sortBy("Bucket.name", "createdAt"))}
         renderItem={(task) => <DayTask key={task.id} task={task} day={day} />}
       />
     </>

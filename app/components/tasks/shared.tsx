@@ -1,6 +1,4 @@
-import React from "react";
 import { Task } from "@prisma/client";
-import cuid from "cuid";
 import { useFetchers } from "remix";
 
 import { Actions } from "~/actions/actions";
@@ -55,11 +53,10 @@ export function ColoredLabel({ label }: { label: string }) {
   let hue = stringToHue(label);
   return (
     <div
-      className="text-xs px-2 m-2 border rounded"
+      className="text-xs px-2 m-2 rounded"
       style={{
         background: `hsl(${hue}, 50%, 95%)`,
         color: `hsl(${hue}, 50%, 40%)`,
-        borderColor: `hsl(${hue}, 50%, 50%)`,
       }}
       children={label}
     />

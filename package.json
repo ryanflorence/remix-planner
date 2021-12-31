@@ -10,7 +10,7 @@
     "build": "npm run build:css && remix build",
     "build:css": "tailwindcss -o ./app/tailwind.css",
     "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
-    "deploy": "rm -rf build public/build && npm run build && fly deploy"
+    "deploy": "fly deploy"
   },
   "dependencies": {
     "@prisma/client": "^3.6.0",
@@ -29,10 +29,10 @@
     "slugify": "^1.6.4",
     "sort-by": "^1.2.0",
     "tailwindcss-neumorphism": "^0.1.0",
-    "tiny-invariant": "^1.2.0"
+    "tiny-invariant": "^1.2.0",
+    "@remix-run/dev": "1.1.1"
   },
   "devDependencies": {
-    "@remix-run/dev": "1.1.1",
     "@types/mailgun-js": "^0.22.12",
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.4",

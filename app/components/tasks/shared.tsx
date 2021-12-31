@@ -55,7 +55,7 @@ export function ColoredLabel({ label }: { label: string }) {
   let hue = stringToHue(label);
   return (
     <div
-      className="text-xs self-center mr-2 px-1 border rounded"
+      className="text-xs px-2 m-2 border rounded"
       style={{
         background: `hsl(${hue}, 50%, 95%)`,
         color: `hsl(${hue}, 50%, 40%)`,

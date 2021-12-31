@@ -11,6 +11,7 @@ import {
   Header,
 } from "~/components/editable-list";
 import {
+  Dot,
   isNewTask,
   RenderedTask,
   useImmigrants,
@@ -111,6 +112,11 @@ function DayTask({ task, day }: { task: RenderedTask; day: string }) {
           );
         }}
       />
+
+      <div className="text-xs self-center text-gray-500 mr-2 px-1 flex items-center">
+        {/*FIXME:*/ (task as any).Bucket.name}
+        <Dot str={(task as any).Bucket.name} />
+      </div>
 
       <fetcher.Form method="post">
         <input

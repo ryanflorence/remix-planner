@@ -21,6 +21,9 @@ export function getBacklog(userId: string) {
   return db.task.findMany({
     where: { userId, date: null },
     orderBy: { createdAt: "asc" },
+    include: {
+      Bucket: { select: { name: true } },
+    },
   });
 }
 
@@ -28,6 +31,9 @@ export function getDayTasks(userId: string, day: string) {
   return db.task.findMany({
     where: { userId, date: day },
     orderBy: { createdAt: "asc" },
+    include: {
+      Bucket: { select: { name: true } },
+    },
   });
 }
 

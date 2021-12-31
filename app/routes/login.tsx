@@ -15,9 +15,7 @@ export default function Index() {
     <div className="flex h-full justify-center items-center">
       <div className="text-center">
         <div>
-          <h1 className="text-5xl font-black text-black dark:text-white">
-            Planner
-          </h1>
+          <h1 className="text-5xl font-black text-black">Planner</h1>
           <div className="text-2xl">Get your 💩 together</div>
         </div>
         <div className="h-8" />

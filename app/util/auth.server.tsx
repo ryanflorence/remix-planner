@@ -325,17 +325,19 @@ async function sendMagicLinkEmail(
 
   let html = renderToStaticMarkup(
     <>
-      <p style={{ fontWeight: "bold" }}>Magic link demo email.</p>
-      <p>(kinda cool we can use JSX to write html email yeah?!)</p>
+      <p style={{ fontWeight: "bold" }}>Log in to Ryan's Planner.</p>
       <p>
-        Just click this <a href={link}>link</a> and you're logged in!
+        (This email uses React to render the email on the server, that's cool)
+      </p>
+      <p>
+        <a href={link}>Click here to be logged in</a>.
       </p>
     </>
   );
 
   if (process.env.NODE_ENV === "production") {
     return mailgun.messages().send({
-      from: "Remix Magic Link Demo <ryan@remix.run>",
+      from: "Ryan's Planner <rpflorence@gmail.com>",
       to: email,
       subject: "Login to Planner!",
       html,

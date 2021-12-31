@@ -10,7 +10,7 @@ import {
   Header,
 } from "~/components/editable-list";
 import {
-  Dot,
+  ColoredLabel,
   isNewTask,
   RenderedTask,
   useImmigrants,
@@ -79,12 +79,7 @@ function BacklogTask({ task }: { task: RenderedTask }) {
           );
         }}
       />
-      {bucketName && (
-        <div className="text-xs self-center text-gray-500 mr-2 px-1 flex items-center">
-          {bucketName}
-          <Dot str={bucketName} />
-        </div>
-      )}
+      {bucketName && <ColoredLabel label={bucketName} />}
     </EditableItem>
   );
 }

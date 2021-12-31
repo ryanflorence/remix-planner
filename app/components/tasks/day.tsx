@@ -11,7 +11,7 @@ import {
   Header,
 } from "~/components/editable-list";
 import {
-  Dot,
+  ColoredLabel,
   isNewTask,
   RenderedTask,
   useImmigrants,
@@ -116,12 +116,7 @@ function DayTask({ task, day }: { task: RenderedTask; day: string }) {
         }}
       />
 
-      {bucketName && (
-        <div className="text-xs self-center text-gray-500 mr-2 px-1 flex items-center">
-          {bucketName}
-          <Dot str={bucketName} />
-        </div>
-      )}
+      {bucketName && <ColoredLabel label={bucketName} />}
 
       <fetcher.Form method="post">
         <input

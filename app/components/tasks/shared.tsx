@@ -51,13 +51,17 @@ export function useImmigrants(action: Actions, tasks: Task[]): Task[] {
   return immigrants;
 }
 
-export function Dot({ str }: { str: string }) {
+export function ColoredLabel({ label }: { label: string }) {
+  let hue = stringToHue(label);
   return (
     <div
-      className="h-2 w-2 rounded-full m-1"
+      className="text-xs self-center mr-2 px-1 border rounded"
       style={{
-        background: numberToHex(hashString(str)),
+        background: `hsl(${hue}, 50%, 95%)`,
+        color: `hsl(${hue}, 50%, 40%)`,
+        borderColor: `hsl(${hue}, 50%, 50%)`,
       }}
+      children={label}
     />
   );
 }
@@ -70,8 +74,6 @@ function hashString(str: string) {
   return hash;
 }
 
-function numberToHex(i: number) {
-  var c = (i & 0x00ffffff).toString(16).toUpperCase();
-  let val = "00000".substring(0, 6 - c.length) + c;
-  return "#" + val;
+export function stringToHue(str: string) {
+  return hashString(str) % 360;
 }

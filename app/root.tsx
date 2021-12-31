@@ -6,6 +6,8 @@ import {
   Outlet,
   useLoaderData,
   NavLink,
+  useTransition,
+  useLocation,
 } from "remix";
 import type { LoaderFunction } from "remix";
 import ringStyles from "react-circular-progressbar/dist/styles.css";
@@ -31,6 +33,12 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function Root() {
   let { authenticated } = useLoaderData();
+  let transition = useTransition();
+  let location = useLocation();
+  let changingPages =
+    transition.location &&
+    transition.location.pathname.split("/")[1] !==
+      location.pathname.split("/")[1];
 
   return (
     <html lang="en" className="overflow-hidden w-full">
@@ -61,7 +69,13 @@ export default function Root() {
                 </button>
               </form>
             </nav>
-            <div className="flex-1 overflow-hidden">
+            <div
+              className={
+                "flex-1 overflow-hidden" +
+                " " +
+                (changingPages ? "opacity-20 transition-opacity delay-500" : "")
+              }
+            >
               <Outlet />
             </div>
           </div>
@@ -86,7 +100,9 @@ function PrimaryNavLink({
     <NavLink
       to={to}
       children={children}
-      className={({ isActive }) => (isActive ? "text-white" : "")}
+      className={({ isActive }) =>
+        isActive ? "text-white" : "focus:text-gray-100"
+      }
     />
   );
 }

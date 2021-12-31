@@ -1,4 +1,4 @@
-import type { LoaderFunction } from "remix";
+import { LoaderFunction, useLocation, useTransition } from "remix";
 import type { CalendarLoaderData } from "../calendar";
 
 import { useLoaderData, useParams, json } from "remix";
@@ -44,6 +44,12 @@ export default function DayRoute() {
 
   let tasks = useLoaderData<DayTasks>();
   let { backlog, weeks, stats } = useParentData<CalendarLoaderData>();
+  let location = useLocation();
+  let transition = useTransition();
+  let changingDays =
+    transition.location &&
+    transition.location.pathname.split("/").slice(-1)[0] !==
+      location.pathname.split("/").slice(-1)[0];
 
   return (
     <SidebarLayout>
@@ -51,7 +57,11 @@ export default function DayRoute() {
         <Calendar day={params.day} weeks={weeks} stats={stats} />
       </SidebarNav>
       <HScrollContent>
-        <HScrollChild>
+        <HScrollChild
+          className={
+            changingDays ? "opacity-20 transition-opacity delay-500" : ""
+          }
+        >
           <DayTaskList day={params.day} tasks={tasks} backlog={backlog} />
         </HScrollChild>
         <HScrollChild>

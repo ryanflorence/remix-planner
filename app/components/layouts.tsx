@@ -23,10 +23,20 @@ export function HScrollContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function HScrollChild({ children }: { children: React.ReactNode }) {
+export function HScrollChild({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div
-      className="flex flex-col h-full flex-shrink-0 w-full order-1 lg:w-1/2 border-l last:border-r"
+      className={
+        "flex flex-col h-full flex-shrink-0 w-full order-1 lg:w-1/2 border-l last:border-r" +
+        " " +
+        className
+      }
       style={{
         scrollSnapAlign: "start",
       }}

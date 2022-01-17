@@ -40,7 +40,10 @@ export function useImmigrants(action: Actions, tasks: Task[]): Task[] {
       if (typeof id === "string") {
         let task = tasksMap.get(id);
         if (task) {
-          immigrants.push(task);
+          immigrants.push({
+            ...task,
+            updatedAt: new Date(), // optimistic
+          });
         }
       }
     }

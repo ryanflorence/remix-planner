@@ -34,9 +34,7 @@ export function BucketTaskList({
       <Header>{bucketName}</Header>
       <EditableList
         label="New Task"
-        items={tasks
-          .concat(immigrants)
-          .sort(sortBy("Bucket.name", "createdAt"))}
+        items={tasks.concat(immigrants).sort(sortBy("updatedAt"))}
         renderItem={(task) => (
           <BucketTask key={task.id} task={task} bucketId={bucketId} />
         )}

@@ -19,7 +19,7 @@ export async function deleteBucket(id: string) {
 export async function getBuckets(userId: string) {
   return db.bucket.findMany({
     where: { userId },
-    orderBy: { createdAt: "asc" },
+    orderBy: { updatedAt: "asc" },
   });
 }
 

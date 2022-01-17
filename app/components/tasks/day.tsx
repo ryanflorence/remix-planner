@@ -36,7 +36,7 @@ export function DayTaskList({
       <Header>{formattedDate}</Header>
       <EditableList
         label="New Task"
-        items={tasks.concat(immigrants).sort(sortBy("updatedAt"))}
+        items={tasks.concat(immigrants).sort(sortBy("sortUpdatedAt"))}
         renderItem={(task) => <DayTask key={task.id} task={task} day={day} />}
       />
     </>

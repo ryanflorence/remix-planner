@@ -40,9 +40,10 @@ model Bucket {
 }
 
 model Task {
-  id        String   @id @unique @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @unique @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sortUpdatedAt DateTime? @default(now())
 
   name     String
   complete Boolean @default(false)

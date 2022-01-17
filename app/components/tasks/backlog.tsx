@@ -30,7 +30,7 @@ export function BacklogTaskList({
     <>
       <Header>Backlog</Header>
       <EditableList
-        items={backlog.concat(immigrants).sort(sortBy("updatedAt"))}
+        items={backlog.concat(immigrants).sort(sortBy("sortUpdatedAt"))}
         renderItem={(task) => <BacklogTask key={task.id} task={task} />}
         label="New Task"
       />

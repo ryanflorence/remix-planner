@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Task" ADD COLUMN     "sortUpdatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;

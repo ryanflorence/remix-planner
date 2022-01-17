@@ -42,7 +42,7 @@ export function useImmigrants(action: Actions, tasks: Task[]): Task[] {
         if (task) {
           immigrants.push({
             ...task,
-            updatedAt: new Date(), // optimistic
+            sortUpdatedAt: new Date(), // optimistic
           });
         }
       }

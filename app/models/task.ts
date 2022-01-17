@@ -13,7 +13,7 @@ export function getBucketTasks(userId: string, slug: string) {
 export function getUnassignedTasks(userId: string) {
   return db.task.findMany({
     where: { userId, bucketId: null },
-    orderBy: { updatedAt: "asc" },
+    orderBy: { sortUpdatedAt: "asc" },
   });
 }
 
@@ -153,28 +153,28 @@ export function markIncomplete(id: string) {
 export function addDate(id: string, date: string) {
   return db.task.update({
     where: { id },
-    data: { date },
+    data: { date, sortUpdatedAt: new Date() },
   });
 }
 
 export function removeDate(id: string) {
   return db.task.update({
     where: { id },
-    data: { date: null },
+    data: { date: null, sortUpdatedAt: new Date() },
   });
 }
 
 export function unassignTask(id: string) {
   return db.task.update({
     where: { id },
-    data: { bucketId: null },
+    data: { bucketId: null, sortUpdatedAt: new Date() },
   });
 }
 
 export function assignTask(id: string, bucketId: string) {
   return db.task.update({
     where: { id },
-    data: { bucketId },
+    data: { bucketId, sortUpdatedAt: new Date() },
   });
 }
 

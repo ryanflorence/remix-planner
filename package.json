@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@prisma/client": "^3.6.0",
-    "@remix-run/react": "1.1.1",
-    "@remix-run/serve": "1.1.1",
+    "@remix-run/react": "1.2.0-pre.1",
+    "@remix-run/serve": "1.2.0-pre.1",
     "cuid": "^2.1.8",
     "date-fns": "^2.27.0",
     "dotenv": "^10.0.0",
@@ -25,12 +25,12 @@
     "react": "^17.0.1",
     "react-circular-progressbar": "^2.0.4",
     "react-dom": "^17.0.1",
-    "remix": "1.1.1",
+    "remix": "1.2.0-pre.1",
     "slugify": "^1.6.4",
     "sort-by": "^1.2.0",
     "tailwindcss-neumorphism": "^0.1.0",
     "tiny-invariant": "^1.2.0",
-    "@remix-run/dev": "1.1.1",
+    "@remix-run/dev": "1.2.0-pre.1",
     "tailwindcss": "^2.2.19"
   },
   "devDependencies": {

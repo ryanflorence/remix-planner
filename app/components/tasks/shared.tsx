@@ -1,5 +1,5 @@
 import { Task } from "@prisma/client";
-import { useFetchers } from "remix";
+import { useFetchers } from "@remix-run/react";
 
 import { Actions } from "~/actions/actions";
 

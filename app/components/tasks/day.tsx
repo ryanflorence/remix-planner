@@ -2,7 +2,7 @@
 import sortBy from "sort-by";
 import { format } from "date-fns";
 import { Task } from "@prisma/client";
-import { useFetcher, useFormAction } from "remix";
+import { useFetcher, useFormAction } from "@remix-run/react";
 
 import { ArrowButton, CheckIcon, RightArrowIcon } from "~/components/icons";
 import { Actions } from "~/actions/actions";

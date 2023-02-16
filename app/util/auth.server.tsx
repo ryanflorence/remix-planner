@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import { renderToStaticMarkup } from "react-dom/server";
 import createMailgun from "mailgun-js";
-import type { ActionFunction, LoaderFunction, Session } from "remix";
-import { createCookieSessionStorage, json, redirect } from "remix";
+import type { ActionFunction, LoaderFunction, Session } from "@remix-run/node";
+import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
 import { ensureUserAccount } from "./user.server";
 
 /*******************************************************************************

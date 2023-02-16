@@ -1,4 +1,4 @@
-import { redirect } from "remix";
+import { redirect } from "@remix-run/node";
 import { db } from "~/models/db.server";
 
 export async function requireUser(email: string) {

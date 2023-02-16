@@ -1,4 +1,5 @@
-import { Link, redirect } from "remix";
+import { redirect } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 export { logoutAction as action } from "~/util/auth.server";
 
 // FIXME: if you redirect here it doesn't reload all data, it acts like a normal

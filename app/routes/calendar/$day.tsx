@@ -1,7 +1,7 @@
-import { LoaderFunction, useLocation, useTransition } from "remix";
+import { json, LoaderFunction } from "@remix-run/node";
+import { useLoaderData, useLocation, useParams, useTransition } from "@remix-run/react";
 import type { CalendarLoaderData } from "../calendar";
 
-import { useLoaderData, useParams, json } from "remix";
 import invariant from "tiny-invariant";
 
 import { handleTaskAction } from "~/actions/actions.server";

@@ -1,4 +1,4 @@
-import { LoaderFunction, redirect } from "remix";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import { requireUserId } from "~/util/auth.server";
 import { createBucket, getRecentBucket } from "~/models/bucket";
 import cuid from "cuid";

@@ -1,15 +1,17 @@
+import type { LoaderFunction } from "@remix-run/node";
+
 import {
-  Meta,
   Links,
-  Scripts,
   LiveReload,
-  Outlet,
-  useLoaderData,
+  Meta,
   NavLink,
-  useTransition,
+  Outlet,
+  Scripts,
+  useLoaderData,
   useLocation,
-} from "remix";
-import type { LoaderFunction } from "remix";
+  useTransition,
+} from "@remix-run/react";
+
 import ringStyles from "react-circular-progressbar/dist/styles.css";
 import { getAuthSession } from "~/util/auth.server";
 import styles from "~/tailwind.css";

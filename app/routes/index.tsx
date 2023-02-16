@@ -1,4 +1,4 @@
-import { LoaderFunction, redirect } from "remix";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import { requireAuthSession } from "~/util/auth.server";
 
 export let loader: LoaderFunction = async ({ request }) => {

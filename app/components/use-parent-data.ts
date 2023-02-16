@@ -1,4 +1,4 @@
-import { useMatches } from "remix";
+import { useMatches } from "@remix-run/react";
 
 // TODO: Decide if I love or hate this
 export function useParentData<T>() {
